@@ -37,7 +37,7 @@ client.on("message", function(message) {
             )
             .setImage('https://media1.tenor.com/images/915bd1719d2dee1adfc04d1a87a83810/tenor.gif')
             .setTimestamp()
-            .setFooter(`Requested by @${author.tag}`, `${author.avatarURL()}`);
+            .setFooter(`Requested by ${author.tag}`, `${author.avatarURL()}`);
         
         // Sending the embed to the channel where the message was posted
         message.channel.send(embed);
