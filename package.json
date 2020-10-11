@@ -1,0 +1,25 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Campus Academy.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EnzoKilm/discord-bot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "campus",
+    "academy"
+  ],
+  "author": "\"Enzo \\ <enzo-beauchamp@live.fr\\> (https://github.com/EnzoKilm)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EnzoKilm/discord-bot/issues"
+  },
+  "homepage": "https://github.com/EnzoKilm/discord-bot#readme"
+}
