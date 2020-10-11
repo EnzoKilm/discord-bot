@@ -3,4 +3,26 @@ const config = require("./config.json");
 
 const client = new Discord.Client();
 
+const prefix = "!";
+
+client.on("message", function(message) {
+    // Prevent the case of the bot responding to itself
+    if (message.author.bot) return;
+    // Prevent the case of the user's message starts with something different than the bot prefix
+    if (!message.content.startsWith(prefix)) return;
+
+    // Deleting the prefix from the message
+    const commandBody = message.content.slice(prefix.length);
+    // Splitting the message into a series of substrings
+    const args = commandBody.split(' ');
+    // Separating the command from the args array
+    const command = args.shift().toLowerCase();
+
+    // Detecting differents commands
+    if (command === "ping") {
+        const timeTaken = Date.now() - message.createdTimestamp;
+        message.reply(`Pong! This message had a latency of ${timeTaken}ms.`);
+    } 
+});
+
 client.login(config.BOT_TOKEN);
