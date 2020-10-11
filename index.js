@@ -54,6 +54,22 @@ client.on("message", function(message) {
         // Deleting the message
         message.delete();
     }
+
+    // if (command == "pkca") {
+    //     const author = message.author;
+    // }
+
+    if (command === "img") {
+        let user = message.guild.members.resolve(args[0]).user;
+        message.reply(`${user.avatarURL()}`);
+    }
+
+    // Command : !add USER_ID
+    if (command === "add") {
+        let user = message.guild.members.resolve(args[0]).user;
+        connection.query(`INSERT INTO users (discord_id, avatar_url) VALUES ('${args[0]}', '${user.avatarURL()}')`, function (error, results, fields) { if (error) throw error });
+        message.reply('User successfully added to the database.');
+    }
 });
 
 client.login(config.BOT_TOKEN);
