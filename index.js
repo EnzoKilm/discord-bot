@@ -1,6 +1,15 @@
 const Discord = require("discord.js");
+const mysql = require('mysql');
 const config = require("./config.json");
-const config = require("./database.js");
+
+// Database connection
+const connection = mysql.createConnection({
+    host     : config.DATABASE.HOST,
+    user     : config.DATABASE.USER,
+    password : config.DATABASE.PASSWORD,
+    database : config.DATABASE.DATABASE
+  });
+connection.connect();
 
 const client = new Discord.Client();
 
