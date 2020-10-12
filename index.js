@@ -1,5 +1,6 @@
 const Discord = require("discord.js");
 const mysql = require('mysql');
+const async = require('async');
 const config = require("./config.json");
 
 // Database connection
@@ -65,7 +66,7 @@ client.on("message", function(message) {
         if (message.author.id === adminID) {
             if (args != "") {
                 let user = message.guild.members.resolve(args[0]).user;
-                connection.query(`INSERT INTO users (discord_id, name, avatar_url) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}')`, function (error, results, fields) { if (error) throw error });
+                connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null)`, function (error, results, fields) { if (error) throw error });
                 message.reply(`User successfully added ${user.username} to the database.`);
             } else {
                 message.reply('The command must contain the argument "USER_ID".');
@@ -77,33 +78,110 @@ client.on("message", function(message) {
     
     // Command : pkca
     if (command === "pkca") {
-        connection.query(`SELECT * FROM users`, function (error, results, fields) {
+        connection.query(`SELECT * FROM users`, function (error, results_users, fields) {
             if (error) {
                 throw error;
-            } else if (results) {
-                let allUsers = [];
-                for (let i=0; i < results.length; i++) {
-                    allUsers.push(results[i]);
-                }
-                let randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
-
+            } else if (results_users) {
                 let author = message.author;
-                let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
-                let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
-                let embed = new Discord.MessageEmbed()
-                    .setColor('#0870F0')
-                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                    .setThumbnail(`${randomUser.avatar_url}`)
-                    .addFields(
-                        { name: `You get`, value: `${emoji} **__${randomUser.name}__**` }
-                    )
-                    .setTimestamp()
-                    .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
-                
-                // Sending the embed to the channel where the message was posted
-                message.channel.send(embed);
-                // Deleting the message
-                message.delete();
+                // Checking the user command cooldown
+                connection.query(`SELECT pokemon_cooldown FROM users WHERE name = '${author.username}'`, function (error, results_cooldown, fields) {
+                    if (error) {
+                        throw error;
+                    } else if (results_cooldown) {
+                        let userCooldown = parseInt(results_cooldown[0].pokemon_cooldown);
+                        if (userCooldown+86400 >= Math.floor((new Date()).getTime() / 1000)) {
+                            let secondsDiff = (userCooldown+86000)-(Math.floor((new Date()).getTime() / 1000));
+                            let hours = 0; // 1 = 3600
+                            let minutes = 0; // 1 = 60
+                            let seconds = 0; // 1 = 1
+                            while (secondsDiff >= 3600) {
+                                hours += 1;
+                                secondsDiff -= 3600;
+                            }
+                            while (secondsDiff >= 60) {
+                                minutes += 1;
+                                secondsDiff -= 60;
+                            }
+                            while (secondsDiff >= 1) {
+                                seconds += 1;
+                                secondsDiff -= 1;
+                            }
+                            let sentence = "";
+                            if (hours > 0) {
+                                sentence += hours+' hours';
+                            }
+                            if (minutes > 0 && hours != 0) {
+                                sentence += ', '+minutes+' minutes';
+                            } else if (minutes > 0) {
+                                sentence += minutes+' minutes';
+                            }
+                            if (seconds > 0 && hours != 0 || seconds > 0 && minutes != 0) {
+                                sentence += ' and '+seconds+' seconds';
+                            } else if (seconds > 0) {
+                                sentence += seconds+' seconds';
+                            }
+                            message.reply(`You need to wait ${sentence} before playing again.`);
+                            // Deleting the message
+                            message.delete();
+                        } else {
+                            let allUsers = [];
+                            for (let i=0; i < results_users.length; i++) {
+                                allUsers.push(results_users[i]);
+                            }
+                            // Selecting a random user from the user list
+                            let randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
+            
+                            let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
+                            let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
+                            let embed = new Discord.MessageEmbed()
+                                .setColor('#0870F0')
+                                .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                .setThumbnail(`${randomUser.avatar_url}`)
+                                .addFields(
+                                    { name: `You get`, value: `${emoji} **__${randomUser.name}__**` }
+                                )
+                                .setTimestamp()
+                                .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
+            
+                            // Saving user informations in the database
+                            connection.query(`UPDATE users SET pokemon_cooldown = '${Math.round((new Date()).getTime() / 1000)}' WHERE name = '${author.username}'`, function (error, results, fields) { if (error) { throw error; } });
+                            
+                            // Checking if the user already have the pokemon
+                            connection.query(`SELECT id FROM users WHERE name = '${author.username}'`, function (error, results_id, fields) {
+                                if (error) {
+                                    throw error;
+                                } else if (results_id) {
+                                    let userID = results_id[0].id;
+                                    // Getting the pokemon id
+                                    connection.query(`SELECT id FROM users WHERE name = "${randomUser.name}"`, function (error, results_pokemon, fields) {
+                                        if (error) {
+                                            throw error;
+                                        } else if (results_pokemon) {
+                                            let pokemonID = results_pokemon[0].id;
+                                            connection.query(`SELECT count FROM pokemon WHERE user_id = '${userID}' AND pokemon_id = '${pokemonID}'`, function (error, results_user_pk, fields) {
+                                                if (error) {
+                                                    throw error;
+                                                } else if (results_user_pk) {
+                                                    if (results_user_pk.length == 0) {
+                                                        connection.query(`INSERT INTO pokemon (user_id, pokemon_id, count) VALUES (${userID}, ${pokemonID}, 1)`, function (error, results_insert_pk, fields) { if (error) { throw error; } });
+                                                    } else {
+                                                        let newCount = results_user_pk[0].count + 1;
+                                                        connection.query(`UPDATE pokemon SET count = ${newCount} WHERE user_id = ${userID} AND pokemon_id = ${pokemonID}`, function (error, results_pk_count, fields) { if (error) { throw error; } });
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                            
+                            // Sending the embed to the channel where the message was posted
+                            message.channel.send(embed);
+                            // Deleting the message
+                            message.delete();
+                        }
+                    }
+                });
             }
         });
     }
@@ -111,19 +189,52 @@ client.on("message", function(message) {
     // Command : inv
     if (command === "inv") {
         let author = message.author;
-        let userID;
         connection.query(`SELECT id FROM users WHERE name = '${author.username}'`, function (error, results, fields) {
             if (error) {
                 throw error;
             } else if (results) {
-                userID = results[0].id;
-            }
-        });
-        connection.query(`SELECT * FROM pokemon WHERE user_id = '${userID}'`, function (error, results, fields) {
-            if (error) {
-                throw error;
-            } else if (results) {
-                console.log(results);
+                let userID = results[0].id;
+                connection.query(`SELECT * FROM pokemon WHERE user_id = '${userID}'`, function (error, results_pk, fields) {
+                    if (error) {
+                        throw error;
+                    } else if (results_pk) {
+                        let embedName = [];
+                        let embedText = [];
+
+                        async.forEachOf(results_pk, function(dataElement, i, inner_callback) {
+                            connection.query(`SELECT name FROM users WHERE id = '${results_pk[i].pokemon_id}'`, function (error, results_pokemon_id, fields) {
+                                if (error) {
+                                    throw error;
+                                } else if (results_pokemon_id) {
+                                    let pokemonName = results_pokemon_id[0].name;
+                                    let pokemonNameChanged = pokemonName.replace("'", '').replace(/\s/g, '');
+                                    let count = results_pk[i].count;
+                                    // console.log(pokemonName);
+                                    let emoji = message.guild.emojis.cache.find(emoji => emoji.name === pokemonNameChanged);
+                                    embedName.push([`**${pokemonName}**`]);
+                                    embedText.push([`${emoji} *x${count}*`]);
+
+                                    if (i+1 == results_pk.length) {
+                                        let embed = new Discord.MessageEmbed()
+                                            .setColor('#0870F0')
+                                            .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                            .addField(`Tu as obtenu ${results_pk.length} sur 11 cartes à collectionner`, `X%`)
+                                        for (let j=0; j < embedText.length; j++) {
+                                            embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
+                                        }
+                                        embed.setTimestamp()
+                                        embed.setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
+                
+                                        // Sending the embed to the channel where the message was posted
+                                        message.channel.send(embed);
+                                        // Deleting the message
+                                        message.delete();
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
             }
         });
     }
