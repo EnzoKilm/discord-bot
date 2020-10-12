@@ -215,20 +215,36 @@ client.on("message", function(message) {
                                     embedText.push([`${emoji} *x${count}*`]);
 
                                     if (i+1 == results_pk.length) {
-                                        let embed = new Discord.MessageEmbed()
-                                            .setColor('#0870F0')
-                                            .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                                            .addField(`Tu as obtenu ${results_pk.length} sur 11 cartes à collectionner`, `X%`)
-                                        for (let j=0; j < embedText.length; j++) {
-                                            embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
-                                        }
-                                        embed.setTimestamp()
-                                        embed.setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
-                
-                                        // Sending the embed to the channel where the message was posted
-                                        message.channel.send(embed);
-                                        // Deleting the message
-                                        message.delete();
+                                        connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+                                            if (error) {
+                                                throw error;
+                                            } else if (results_all_users) {
+                                                let progressPercent = Math.round((results_pk.length/results_all_users.length)*100);
+                                                let progressPercentBar = Math.round(progressPercent/10*3);
+                                                let progressBar = '';
+                                                for (let j=0; j < 30; j++) {
+                                                    if (j <= progressPercentBar) {
+                                                        progressBar += '█';
+                                                    } else {
+                                                        progressBar += '░';
+                                                    }
+                                                }
+                                                let embed = new Discord.MessageEmbed()
+                                                    .setColor('#0870F0')
+                                                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                    .addField(`Tu as obtenu ${results_pk.length} sur ${results_all_users.length} cartes à collectionner.`, `${progressBar} ${progressPercent}%`)
+                                                for (let j=0; j < embedText.length; j++) {
+                                                    embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
+                                                }
+                                                embed.setTimestamp()
+                                                embed.setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
+                        
+                                                // Sending the embed to the channel where the message was posted
+                                                message.channel.send(embed);
+                                                // Deleting the message
+                                                message.delete();
+                                            }
+                                        });
                                     }
                                 }
                             });
