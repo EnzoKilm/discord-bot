@@ -14,6 +14,8 @@ connection.connect();
 const client = new Discord.Client();
 
 const prefix = "!";
+const adminID = "223095215970451456";
+const botID = "764181647632891965";
 
 client.on("message", function(message) {
     // Prevent the case of the bot responding to itself
@@ -27,6 +29,8 @@ client.on("message", function(message) {
     const args = commandBody.split(' ');
     // Separating the command from the args array
     const command = args.shift().toLowerCase();
+    // We get the bot object
+    const bot = message.guild.members.resolve(botID).user;
 
     // Detecting differents commands
     if (command === "ping") {
@@ -34,6 +38,7 @@ client.on("message", function(message) {
         message.reply(`Pong! This message had a latency of ${timeTaken}ms.`);
     }
 
+    // Command : actus
     if (command === "actus") {
         const author = message.author;
         const embed = new Discord.MessageEmbed()
@@ -55,20 +60,72 @@ client.on("message", function(message) {
         message.delete();
     }
 
-    // if (command == "pkca") {
-    //     const author = message.author;
-    // }
-
-    if (command === "img") {
-        let user = message.guild.members.resolve(args[0]).user;
-        message.reply(`${user.avatarURL()}`);
-    }
-
-    // Command : !add USER_ID
+    // Command : add USER_ID
     if (command === "add") {
-        let user = message.guild.members.resolve(args[0]).user;
-        connection.query(`INSERT INTO users (discord_id, avatar_url) VALUES ('${args[0]}', '${user.avatarURL()}')`, function (error, results, fields) { if (error) throw error });
-        message.reply('User successfully added to the database.');
+        if (message.author.id === adminID) {
+            if (args != "") {
+                let user = message.guild.members.resolve(args[0]).user;
+                connection.query(`INSERT INTO users (discord_id, name, avatar_url) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}')`, function (error, results, fields) { if (error) throw error });
+                message.reply(`User successfully added ${user.username} to the database.`);
+            } else {
+                message.reply('The command must contain the argument "USER_ID".');
+            }
+        } else {
+            message.reply('Access denied.');
+        }
+    }
+    
+    // Command : pkca
+    if (command === "pkca") {
+        connection.query(`SELECT * FROM users`, function (error, results, fields) {
+            if (error) {
+                throw error;
+            } else if (results) {
+                let allUsers = [];
+                for (let i=0; i < results.length; i++) {
+                    allUsers.push(results[i]);
+                }
+                let randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
+
+                let author = message.author;
+                let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
+                let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
+                let embed = new Discord.MessageEmbed()
+                    .setColor('#0870F0')
+                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                    .setThumbnail(`${randomUser.avatar_url}`)
+                    .addFields(
+                        { name: `You get`, value: `${emoji} **__${randomUser.name}__**` }
+                    )
+                    .setTimestamp()
+                    .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
+                
+                // Sending the embed to the channel where the message was posted
+                message.channel.send(embed);
+                // Deleting the message
+                message.delete();
+            }
+        });
+    }
+    
+    // Command : inv
+    if (command === "inv") {
+        let author = message.author;
+        let userID;
+        connection.query(`SELECT id FROM users WHERE name = '${author.username}'`, function (error, results, fields) {
+            if (error) {
+                throw error;
+            } else if (results) {
+                userID = results[0].id;
+            }
+        });
+        connection.query(`SELECT * FROM pokemon WHERE user_id = '${userID}'`, function (error, results, fields) {
+            if (error) {
+                throw error;
+            } else if (results) {
+                console.log(results);
+            }
+        });
     }
 });
 
