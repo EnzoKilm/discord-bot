@@ -201,58 +201,87 @@ client.on("message", function(message) {
                         let embedName = [];
                         let embedText = [];
 
-                        async.forEachOf(results_pk, function(dataElement, i, inner_callback) {
-                            connection.query(`SELECT name FROM users WHERE id = '${results_pk[i].pokemon_id}'`, function (error, results_pokemon_id, fields) {
+                        if (results_pk.length > 0) {
+                            async.forEachOf(results_pk, function(dataElement, i, inner_callback) {
+                                connection.query(`SELECT name FROM users WHERE id = '${results_pk[i].pokemon_id}'`, function (error, results_pokemon_id, fields) {
+                                    if (error) {
+                                        throw error;
+                                    } else if (results_pokemon_id) {
+                                        let pokemonName = results_pokemon_id[0].name;
+                                        let pokemonNameChanged = pokemonName.replace("'", '').replace(/\s/g, '');
+                                        let count = results_pk[i].count;
+                                        // console.log(pokemonName);
+                                        let emoji = message.guild.emojis.cache.find(emoji => emoji.name === pokemonNameChanged);
+                                        embedName.push([`**${pokemonName}**`]);
+                                        embedText.push([`${emoji} *x${count}*`]);
+    
+                                        if (i+1 == results_pk.length) {
+                                            connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+                                                if (error) {
+                                                    throw error;
+                                                } else if (results_all_users) {
+                                                    let progressPercent = Math.round((results_pk.length/results_all_users.length)*100);
+                                                    let progressPercentBar = Math.round(progressPercent/10*3);
+                                                    let progressBar = '';
+                                                    for (let j=0; j < 30; j++) {
+                                                        if (j <= progressPercentBar) {
+                                                            progressBar += '█';
+                                                        } else {
+                                                            progressBar += '░';
+                                                        }
+                                                    }
+                                                    let embed = new Discord.MessageEmbed()
+                                                        .setColor('#0870F0')
+                                                        .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                        .addField(`Tu as obtenu ${results_pk.length} sur ${results_all_users.length} cartes à collectionner.`, `${progressBar} ${progressPercent}%`)
+                                                    for (let j=0; j < embedText.length; j++) {
+                                                        embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
+                                                    }
+                                                    embed.setTimestamp()
+                                                    embed.setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
+                            
+                                                    // Sending the embed to the channel where the message was posted
+                                                    message.channel.send(embed);
+                                                    // Deleting the message
+                                                    message.delete();
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            });
+                        } else {
+                            connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
                                 if (error) {
                                     throw error;
-                                } else if (results_pokemon_id) {
-                                    let pokemonName = results_pokemon_id[0].name;
-                                    let pokemonNameChanged = pokemonName.replace("'", '').replace(/\s/g, '');
-                                    let count = results_pk[i].count;
-                                    // console.log(pokemonName);
-                                    let emoji = message.guild.emojis.cache.find(emoji => emoji.name === pokemonNameChanged);
-                                    embedName.push([`**${pokemonName}**`]);
-                                    embedText.push([`${emoji} *x${count}*`]);
+                                } else if (results_all_users) {
+                                    let embed = new Discord.MessageEmbed()
+                                        .setColor('#0870F0')
+                                        .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                        .addField(`Tu n'as obtenu aucune carte sur les ${results_all_users.length} à collectionner.`, `Essaye d'écrire la commande ${prefix}pkca`)
+                                        .setTimestamp()
+                                        .setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
 
-                                    if (i+1 == results_pk.length) {
-                                        connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
-                                            if (error) {
-                                                throw error;
-                                            } else if (results_all_users) {
-                                                let progressPercent = Math.round((results_pk.length/results_all_users.length)*100);
-                                                let progressPercentBar = Math.round(progressPercent/10*3);
-                                                let progressBar = '';
-                                                for (let j=0; j < 30; j++) {
-                                                    if (j <= progressPercentBar) {
-                                                        progressBar += '█';
-                                                    } else {
-                                                        progressBar += '░';
-                                                    }
-                                                }
-                                                let embed = new Discord.MessageEmbed()
-                                                    .setColor('#0870F0')
-                                                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                                                    .addField(`Tu as obtenu ${results_pk.length} sur ${results_all_users.length} cartes à collectionner.`, `${progressBar} ${progressPercent}%`)
-                                                for (let j=0; j < embedText.length; j++) {
-                                                    embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
-                                                }
-                                                embed.setTimestamp()
-                                                embed.setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
-                        
-                                                // Sending the embed to the channel where the message was posted
-                                                message.channel.send(embed);
-                                                // Deleting the message
-                                                message.delete();
-                                            }
-                                        });
-                                    }
+                                    // Sending the embed to the channel where the message was posted
+                                    message.channel.send(embed);
+                                    // Deleting the message
+                                    message.delete();
                                 }
                             });
-                        });
+                        }
                     }
                 });
             }
         });
+    }
+
+    // Test command
+    if (command === "test") {
+        if (message.author.id === adminID) {
+            
+        } else {
+            message.reply('Access denied.');
+        }
     }
 });
 
