@@ -14,10 +14,33 @@ connection.connect();
 
 const client = new Discord.Client();
 
+// async function prefixQuery() {
+//     connection.query(`SELECT * FROM config WHERE id=1`, function (error, results, fields) { return results });
+// }
+
+
+// var newprefix = await prefixQuery();
+// console.log(result);
+
+var newprefix = "!";
+
+// connection.query(`SELECT * FROM config WHERE id=1`, function(err, rows){
+//   if(err) {
+//     throw err;
+//   } else {
+//     setPrefix(rows);
+//   }
+// });
+
+// function setPrefix(value) {
+//     newprefix = value;
+// }
+
+// console.log(newprefix);
 const prefix = "!";
 const adminID = "223095215970451456";
 const adminRole = "765966757243781130";
-const moderatorRole = "762615019354587156";
+const modoRole = "762615019354587156";
 const botID = "764181647632891965";
 
 client.on("message", function(message) {
@@ -40,24 +63,26 @@ client.on("message", function(message) {
 
     let member = message.member;
     let admin = false;
-    // If the user is administrator
-    if (member.roles.has(adminRole)) {
-        admin = true;
-    }
     let modo = false;
-    // If the user is moderator
-    if (member.roles.has(moderatorRole)) {
-        modo = true;
+    // Checking user's roles
+    let memberRoles = member.roles.member._roles;
+    for (let i=0; i < memberRoles.length; i++) {
+        if (memberRoles[i] == adminRole) {
+            admin = true;
+            modo = true;
+        } else if (memberRoles[i] == modoRole) {
+            modo = true;
+        }
     }
 
     // Detecting differents commands
-    if (command === "ping" && modo == true) {
+    if (command === "ping" && modo === true) {
         const timeTaken = Date.now() - message.createdTimestamp;
         message.reply(`Pong! This message had a latency of ${timeTaken}ms.`);
     }
 
     // Command : actus
-    if (command === "actus" && admin == true) {
+    if (command === "actus" && admin === true) {
         const embed = new Discord.MessageEmbed()
             .setColor('#ffffff')
             .setTitle('Un nouveau bot arrive sur le discord !')
@@ -79,16 +104,12 @@ client.on("message", function(message) {
 
     // Command : add USER_ID
     if (command === "add" && admin === true) {
-        if (message.author.id === adminID) {
-            if (args != "") {
-                let user = message.guild.members.resolve(args[0]).user;
-                connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null)`, function (error, results, fields) { if (error) throw error });
-                message.reply(`User successfully added ${user.username} to the database.`);
-            } else {
-                message.reply('The command must contain the argument "USER_ID".');
-            }
+        if (args != "") {
+            let user = message.guild.members.resolve(args[0]).user;
+            connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null)`, function (error, results, fields) { if (error) throw error });
+            message.reply(`User successfully added ${user.username} to the database.`);
         } else {
-            message.reply('Access denied.');
+            message.reply('The command must contain the argument "USER_ID".');
         }
     }
     
@@ -224,7 +245,6 @@ client.on("message", function(message) {
                                         let pokemonName = results_pokemon_id[0].name;
                                         let pokemonNameChanged = pokemonName.replace("'", '').replace(/\s/g, '');
                                         let count = results_pk[i].count;
-                                        // console.log(pokemonName);
                                         let emoji = message.guild.emojis.cache.find(emoji => emoji.name === pokemonNameChanged);
                                         embedName.push([`**${pokemonName}**`]);
                                         embedText.push([`${emoji} *x${count}*`]);
@@ -291,30 +311,26 @@ client.on("message", function(message) {
 
     // Command : cdreset
     if (command === "cdreset" && admin === true) {
-        if (message.author.id === adminID) {
-            connection.query(`UPDATE users SET pokemon_cooldown = null WHERE pokemon_cooldown IS NOT NULL`, function (error, results, fields) { if (error) { throw error; } });
+        connection.query(`UPDATE users SET pokemon_cooldown = null WHERE pokemon_cooldown IS NOT NULL`, function (error, results, fields) { if (error) { throw error; } });
 
-            connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
-                if (error) {
-                    throw error;
-                } else if (results_all_users) {
-                    let embed = new Discord.MessageEmbed()
-                        .setColor('#AD1015')
-                        .setTitle('Les cooldowns ont étés réinitialisés !')
-                        .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                        .addField(`Votre adminisrateur vient de réinitialiser les cooldowns.`, `Essaye d'écrire la commande ${prefix}pkca 😉`)
-                        .setTimestamp()
-                        .setFooter(`Good luck !`, `${bot.avatarURL()}`);
+        connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+            if (error) {
+                throw error;
+            } else if (results_all_users) {
+                let embed = new Discord.MessageEmbed()
+                    .setColor('#AD1015')
+                    .setTitle('Les cooldowns ont étés réinitialisés !')
+                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                    .addField(`Votre adminisrateur vient de réinitialiser les cooldowns.`, `Essaye d'écrire la commande ${prefix}pkca 😉`)
+                    .setTimestamp()
+                    .setFooter(`Good luck !`, `${bot.avatarURL()}`);
 
-                    // Sending the embed to the channel where the message was posted
-                    message.channel.send(embed);
-                    // Deleting the message
-                    message.delete();
-                }
-            });
-        } else {
-            message.reply('Access denied.');
-        }
+                // Sending the embed to the channel where the message was posted
+                message.channel.send(embed);
+                // Deleting the message
+                message.delete();
+            }
+        });
     }
 
     // Command : help
