@@ -84,13 +84,13 @@ client.on("message", function(message) {
             } else if (results_users) {
                 let author = message.author;
                 // Checking the user command cooldown
-                connection.query(`SELECT pokemon_cooldown FROM users WHERE name = '${author.username}'`, function (error, results_cooldown, fields) {
+                connection.query(`SELECT pokemon_cooldown FROM users WHERE name = "${author.username}"`, function (error, results_cooldown, fields) {
                     if (error) {
                         throw error;
                     } else if (results_cooldown) {
                         let userCooldown = parseInt(results_cooldown[0].pokemon_cooldown);
-                        if (userCooldown+86400 >= Math.floor((new Date()).getTime() / 1000)) {
-                            let secondsDiff = (userCooldown+86000)-(Math.floor((new Date()).getTime() / 1000));
+                        if (userCooldown+43200 >= parseInt(new Date().getTime() / 1000)) {
+                            let secondsDiff = (userCooldown+43200)-(parseInt(new Date().getTime() / 1000));
                             let hours = 0; // 1 = 3600
                             let minutes = 0; // 1 = 60
                             let seconds = 0; // 1 = 1
@@ -144,10 +144,10 @@ client.on("message", function(message) {
                                 .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
             
                             // Saving user informations in the database
-                            connection.query(`UPDATE users SET pokemon_cooldown = '${Math.round((new Date()).getTime() / 1000)}' WHERE name = '${author.username}'`, function (error, results, fields) { if (error) { throw error; } });
+                            connection.query(`UPDATE users SET pokemon_cooldown = '${Math.round((new Date()).getTime() / 1000)}' WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
                             
                             // Checking if the user already have the pokemon
-                            connection.query(`SELECT id FROM users WHERE name = '${author.username}'`, function (error, results_id, fields) {
+                            connection.query(`SELECT id FROM users WHERE name = "${author.username}"`, function (error, results_id, fields) {
                                 if (error) {
                                     throw error;
                                 } else if (results_id) {
@@ -189,7 +189,7 @@ client.on("message", function(message) {
     // Command : inv
     if (command === "inv") {
         let author = message.author;
-        connection.query(`SELECT id FROM users WHERE name = '${author.username}'`, function (error, results, fields) {
+        connection.query(`SELECT id FROM users WHERE name = "${author.username}"`, function (error, results, fields) {
             if (error) {
                 throw error;
             } else if (results) {
@@ -221,9 +221,9 @@ client.on("message", function(message) {
                                                     throw error;
                                                 } else if (results_all_users) {
                                                     let progressPercent = Math.round((results_pk.length/results_all_users.length)*100);
-                                                    let progressPercentBar = Math.round(progressPercent/10*3);
+                                                    let progressPercentBar = Math.round(progressPercent/10*2);
                                                     let progressBar = '';
-                                                    for (let j=0; j < 30; j++) {
+                                                    for (let j=0; j < 20; j++) {
                                                         if (j <= progressPercentBar) {
                                                             progressBar += '█';
                                                         } else {
@@ -233,7 +233,7 @@ client.on("message", function(message) {
                                                     let embed = new Discord.MessageEmbed()
                                                         .setColor('#0870F0')
                                                         .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                                                        .addField(`Tu as obtenu ${results_pk.length} sur ${results_all_users.length} cartes à collectionner.`, `${progressBar} ${progressPercent}%`)
+                                                        .addField(`Tu as obtenu ${results_pk.length} des ${results_all_users.length} cartes à collectionner.`, `${progressBar} ${progressPercent}%`)
                                                     for (let j=0; j < embedText.length; j++) {
                                                         embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
                                                     }
@@ -275,10 +275,11 @@ client.on("message", function(message) {
         });
     }
 
-    // Test command
-    if (command === "test") {
+    // Command : help
+    if (command === "help") {
         if (message.author.id === adminID) {
-            
+            // Deleting the message
+            message.delete();
         } else {
             message.reply('Access denied.');
         }
