@@ -276,6 +276,35 @@ client.on("message", function(message) {
     }
 
     // Command : help
+    if (command === "cdreset") {
+        let author = message.author;
+        if (message.author.id === adminID) {
+            connection.query(`UPDATE users SET pokemon_cooldown = null WHERE pokemon_cooldown IS NOT NULL`, function (error, results, fields) { if (error) { throw error; } });
+
+            connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+                if (error) {
+                    throw error;
+                } else if (results_all_users) {
+                    let embed = new Discord.MessageEmbed()
+                        .setColor('#AD1015')
+                        .setTitle('Les cooldowns ont étés réinitialisés !')
+                        .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                        .addField(`Votre adminisrateur vient de réinitialiser les cooldowns.`, `Essaye d'écrire la commande ${prefix}pkca 😉`)
+                        .setTimestamp()
+                        .setFooter(`Good luck !`, `${bot.avatarURL()}`);
+
+                    // Sending the embed to the channel where the message was posted
+                    message.channel.send(embed);
+                    // Deleting the message
+                    message.delete();
+                }
+            });
+        } else {
+            message.reply('Access denied.');
+        }
+    }
+
+    // Command : help
     if (command === "help") {
         if (message.author.id === adminID) {
             // Deleting the message
