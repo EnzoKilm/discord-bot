@@ -16,6 +16,8 @@ const client = new Discord.Client();
 
 const prefix = "!";
 const adminID = "223095215970451456";
+const adminRole = "765966757243781130";
+const moderatorRole = "762615019354587156";
 const botID = "764181647632891965";
 
 client.on("message", function(message) {
@@ -33,20 +35,34 @@ client.on("message", function(message) {
     // We get the bot object
     const bot = message.guild.members.resolve(botID).user;
 
+    let admin = false;
+    let modo = false;
+    let member = message.member;
+    // Admin commands
+    let memberRoles = member.roles.member._roles;
+    for (let i=0; i < memberRoles.length; i++) {
+        if (memberRoles[i] == adminRole) {
+            admin = true;
+            modo = true;
+        } else if (memberRoles[i] == moderatorRole) {
+            modo = true;
+        }
+    }
+
     // Detecting differents commands
-    if (command === "ping") {
+    if (command === "ping" && modo == true) {
         const timeTaken = Date.now() - message.createdTimestamp;
         message.reply(`Pong! This message had a latency of ${timeTaken}ms.`);
     }
 
     // Command : actus
-    if (command === "actus") {
+    if (command === "actus" && admin == true) {
         const author = message.author;
         const embed = new Discord.MessageEmbed()
             .setColor('#ffffff')
             .setTitle('Un nouveau bot arrive sur le discord !')
             .setURL('https://i.giphy.com/media/xThuWhoaNyNBjTGERa/giphy.webp')
-            .setAuthor('Campus Academy', 'https://i.imgur.com/JvgbYON.png', 'https://campus.academy/')
+            .setAuthor('Campus Academy', 'https://i.imgur.com/JvgbYON.png', 'https://github.com/EnzoKilm/discord-bot')
             .setThumbnail('https://i.imgur.com/pShRI7I.png')
             .addFields(
                 { name: 'Plein de fonctionnalités sont à venir...', value: 'N\'hésite pas à soumettre tes idées dans le channel <#764834554783334460> !' },
@@ -62,7 +78,7 @@ client.on("message", function(message) {
     }
 
     // Command : add USER_ID
-    if (command === "add") {
+    if (command === "add" && admin === true) {
         if (message.author.id === adminID) {
             if (args != "") {
                 let user = message.guild.members.resolve(args[0]).user;
@@ -275,8 +291,8 @@ client.on("message", function(message) {
         });
     }
 
-    // Command : help
-    if (command === "cdreset") {
+    // Command : cdreset
+    if (command === "cdreset" && admin === true) {
         let author = message.author;
         if (message.author.id === adminID) {
             connection.query(`UPDATE users SET pokemon_cooldown = null WHERE pokemon_cooldown IS NOT NULL`, function (error, results, fields) { if (error) { throw error; } });
@@ -306,12 +322,35 @@ client.on("message", function(message) {
 
     // Command : help
     if (command === "help") {
-        if (message.author.id === adminID) {
-            // Deleting the message
-            message.delete();
-        } else {
-            message.reply('Access denied.');
+        const author = message.author;
+        // Creating the embed
+        const embed = new Discord.MessageEmbed()
+            .setColor('#ffffff')
+            .setTitle('Liste de vos commandes')
+            .setAuthor('Campus Academy', 'https://i.imgur.com/JvgbYON.png', 'https://github.com/EnzoKilm/discord-bot')
+
+        // Checking member roles
+        if (admin == true) {
+            embed.addFields(
+                { name: 'Admin commands', value: '```!actus : display the last actuality.\n!add USER_ID : add a user to the pokemon card game.\n!cdreset : reset pokemon pkca cooldown for all users.```' },
+            );
         }
+        if (modo == true) {
+            embed.addFields(
+                { name: 'Moderator commands', value: '```!test : test command.\n!ping : get the latency of the bot.```' },
+            );
+        }
+        embed.addFields(
+            { name: 'User commands', value: '```!pkca : get a random pokemon user card.\n!inv : see your pokemon\'s card collection.```' },
+        );
+
+        embed.setTimestamp();
+        embed.setFooter(`Requested by ${author.tag}`, `${author.avatarURL()}`);
+        
+        // Sending the embed to the channel where the message was posted
+        message.channel.send(embed);
+        // Deleting the message
+        message.delete();
     }
 });
 
