@@ -35,18 +35,19 @@ client.on("message", function(message) {
     // We get the bot object
     const bot = message.guild.members.resolve(botID).user;
 
-    let admin = false;
-    let modo = false;
+    // Define the author constant
+    const author = message.author;
+
     let member = message.member;
-    // Admin commands
-    let memberRoles = member.roles.member._roles;
-    for (let i=0; i < memberRoles.length; i++) {
-        if (memberRoles[i] == adminRole) {
-            admin = true;
-            modo = true;
-        } else if (memberRoles[i] == moderatorRole) {
-            modo = true;
-        }
+    let admin = false;
+    // If the user is administrator
+    if (member.roles.has(adminRole)) {
+        admin = true;
+    }
+    let modo = false;
+    // If the user is moderator
+    if (member.roles.has(moderatorRole)) {
+        modo = true;
     }
 
     // Detecting differents commands
@@ -57,7 +58,6 @@ client.on("message", function(message) {
 
     // Command : actus
     if (command === "actus" && admin == true) {
-        const author = message.author;
         const embed = new Discord.MessageEmbed()
             .setColor('#ffffff')
             .setTitle('Un nouveau bot arrive sur le discord !')
@@ -98,7 +98,6 @@ client.on("message", function(message) {
             if (error) {
                 throw error;
             } else if (results_users) {
-                let author = message.author;
                 // Checking the user command cooldown
                 connection.query(`SELECT pokemon_cooldown FROM users WHERE name = "${author.username}"`, function (error, results_cooldown, fields) {
                     if (error) {
@@ -204,7 +203,6 @@ client.on("message", function(message) {
     
     // Command : inv
     if (command === "inv") {
-        let author = message.author;
         connection.query(`SELECT id FROM users WHERE name = "${author.username}"`, function (error, results, fields) {
             if (error) {
                 throw error;
@@ -293,7 +291,6 @@ client.on("message", function(message) {
 
     // Command : cdreset
     if (command === "cdreset" && admin === true) {
-        let author = message.author;
         if (message.author.id === adminID) {
             connection.query(`UPDATE users SET pokemon_cooldown = null WHERE pokemon_cooldown IS NOT NULL`, function (error, results, fields) { if (error) { throw error; } });
 
@@ -322,7 +319,6 @@ client.on("message", function(message) {
 
     // Command : help
     if (command === "help") {
-        const author = message.author;
         // Creating the embed
         const embed = new Discord.MessageEmbed()
             .setColor('#ffffff')
