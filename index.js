@@ -364,7 +364,7 @@ promise1.then((value) => {
             // Checking member roles
             if (admin == true) {
                 embed.addFields(
-                    { name: 'Admin commands', value: '```!actus : display the last actuality.\n!add USER_ID RARITY : add a user to the pokemon card game.\n!cdreset : reset pokemon pkca cooldown for all users.\n!prefix NEW_PREFIX : change bot prefix.```' },
+                    { name: 'Admin commands', value: '```!actus : display the last actuality.\n!add USER_ID RARITY : add a user to the pokemon card game.\n!cdreset : reset pokemon pkca cooldown for all users.\n!prefix NEW_PREFIX : change bot prefix.\n!newcard USER_ID : display new card message.```' },
                 );
             }
             if (modo == true) {
