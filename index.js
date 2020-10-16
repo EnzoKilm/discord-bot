@@ -373,7 +373,7 @@ promise1.then((value) => {
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: '```!pkca : get a random pokemon user card.\n!inv @USER: see user\'s pokemon card collection.```' },
+                { name: 'User commands', value: '```!pkca : get a random pokemon user card.\n!inv @USER: see user\'s pokemon card collection.\n!rarity : see cards rarity percentages```' },
             );
     
             embed.setTimestamp();
@@ -408,11 +408,12 @@ promise1.then((value) => {
                         throw error;
                     } else if (result_newcard) {
                         let newUser = result_newcard[0];
+                        let emoji = message.guild.emojis.cache.find(emoji => emoji.name === newUser.rarity);
                         let embed = new Discord.MessageEmbed()
                             .setColor('#AD1015')
-                            .setTitle('Une nouvelle carte vient d\'arriver !')
+                            .setTitle(`Une nouvelle carte vient d'arriver !`)
                             .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                            .addField(`Vous pouvez désormais obtenir la carte ${newUser.name} !`, `Rareté de la carte : ${newUser.rarity}.`)
+                            .addField(`Vous pouvez désormais obtenir la carte ${newUser.name} !`, `Rareté de la carte : ${newUser.rarity} ${emoji}.`)
                             .setImage(`${newUser.avatar_url}`)
                             .setTimestamp()
                             .setFooter(`Bonne collection !`, `${bot.avatarURL()}`);
@@ -426,6 +427,34 @@ promise1.then((value) => {
             } else {
                 message.reply('The command must contain the argument "USER_ID".');
             }
+        }
+
+        // Command : rarity
+        if (command === "rarity") {
+            // Common : 70%; Rare : 20%; Epic : 8%; Legendary : 2%;
+            let rarities = ["common", "rare", "epic", "legendary"];
+            let emojis = [];
+            for (let i=0; i < rarities.length; i++) {
+                emojis.push(message.guild.emojis.cache.find(emoji => emoji.name === rarities[i]));
+            }
+            let embed = new Discord.MessageEmbed()
+                .setColor('#273261')
+                .setTitle(`Rareté des cartes demandée par ${author.username}`)
+                .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                .addField()
+                .addFields(
+                    { name: `Common ${emojis[0]}`, value: '70%' },
+                    { name: `Rare ${emojis[1]}`, value: '20%' },
+                    { name: `Epic ${emojis[2]}`, value: '8%'},
+                    { name: `Legendary ${emojis[3]}`, value: '2%'},
+                )
+                .setTimestamp()
+                .setFooter(`Bonne collection !`, `${bot.avatarURL()}`);
+
+            // Sending the embed to the channel where the message was posted
+            message.channel.send(embed);
+            // Deleting the message
+            message.delete();
         }
     });
     
