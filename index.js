@@ -111,6 +111,7 @@ promise1.then((value) => {
             // Getting the type of the card the user will get
             let randomNumber = Math.random();
             let rarities = ["common", "rare", "epic", "legendary"];
+            let rarityColors = ["#6792f0", "#27db21", "#b509b2", "#fce82d"];
             let rarity = rarities[0];
             // Common card : 70%; Rare card : 20%; Epic card : 8%; Legendary : 2%;
             if (randomNumber >= 0.7 && randomNumber < 0.9) {
@@ -172,7 +173,7 @@ promise1.then((value) => {
                                 let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
                                 let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
                                 let embed = new Discord.MessageEmbed()
-                                    .setColor('#0870F0')
+                                    .setColor(`${rarityColors[rarities.indexOf(rarity)]}`)
                                     .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
@@ -385,7 +386,7 @@ promise1.then((value) => {
         }
 
         // Command : prefix
-        if (command == "prefix" && admin === true) {
+        if (command === "prefix" && admin === true) {
             if (args.length == 1) {
                 let newprefix = args[0];
 
@@ -396,6 +397,34 @@ promise1.then((value) => {
                 prefix = newprefix;
             } else {
                 message.reply('The command must contain the argument "NEW_PREFIX".');
+            }
+        }
+
+        // Command : newcard USER_ID
+        if (command === "newcard" && admin === true) {
+            if (args != "") {
+                connection.query(`SELECT * FROM users WHERE id=${args[0]}`, function (error, result_newcard, fields) {
+                    if (error) {
+                        throw error;
+                    } else if (result_newcard) {
+                        let newUser = result_newcard[0];
+                        let embed = new Discord.MessageEmbed()
+                            .setColor('#AD1015')
+                            .setTitle('Une nouvelle carte vient d\'arriver !')
+                            .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                            .addField(`Vous pouvez désormais obtenir la carte ${newUser.name} !`, `Rareté de la carte : ${newUser.rarity}.`)
+                            .setImage(`${newUser.avatar_url}`)
+                            .setTimestamp()
+                            .setFooter(`Bonne collection !`, `${bot.avatarURL()}`);
+        
+                        // Sending the embed to the channel where the message was posted
+                        message.channel.send(embed);
+                        // Deleting the message
+                        message.delete();
+                    }
+                });
+            } else {
+                message.reply('The command must contain the argument "USER_ID".');
             }
         }
     });
