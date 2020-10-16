@@ -95,11 +95,11 @@ promise1.then((value) => {
             message.delete();
         }
     
-        // Command : add USER_ID
+        // Command : add USER_ID RARITY
         if (command === "add" && admin === true) {
             if (args != "") {
                 let user = message.guild.members.resolve(args[0]).user;
-                connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null)`, function (error, results, fields) { if (error) throw error });
+                connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown, rarity) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null, '${args[1]}')`, function (error, results, fields) { if (error) throw error });
                 message.reply(`User successfully added ${user.username} to the database.`);
             } else {
                 message.reply('The command must contain the argument "USER_ID".');
@@ -108,6 +108,19 @@ promise1.then((value) => {
         
         // Command : pkca
         if (command === "pkca") {
+            // Getting the type of the card the user will get
+            let randomNumber = Math.random();
+            let rarities = ["common", "rare", "epic", "legendary"];
+            let rarity = rarities[0];
+            // Common card : 70%; Rare card : 20%; Epic card : 8%; Legendary : 2%;
+            if (randomNumber >= 0.7 && randomNumber < 0.9) {
+                rarity = rarities[1];
+            } else if (randomNumber >= 0.9 && randomNumber < 0.98) {
+                rarity = rarities[2];
+            } else if (randomNumber >= 0.98) {
+                rarity = rarities[3];
+            }
+
             connection.query(`SELECT * FROM users`, function (error, results_users, fields) {
                 if (error) {
                     throw error;
@@ -117,48 +130,44 @@ promise1.then((value) => {
                         if (error) {
                             throw error;
                         } else if (results_cooldown) {
-                            let userCooldown = parseInt(results_cooldown[0].pokemon_cooldown);
-                            if (userCooldown+43200 >= parseInt(new Date().getTime() / 1000)) {
-                                let secondsDiff = (userCooldown+43200)-(parseInt(new Date().getTime() / 1000));
-                                let hours = 0; // 1 = 3600
-                                let minutes = 0; // 1 = 60
-                                let seconds = 0; // 1 = 1
-                                while (secondsDiff >= 3600) {
-                                    hours += 1;
-                                    secondsDiff -= 3600;
-                                }
-                                while (secondsDiff >= 60) {
-                                    minutes += 1;
-                                    secondsDiff -= 60;
-                                }
-                                while (secondsDiff >= 1) {
-                                    seconds += 1;
-                                    secondsDiff -= 1;
-                                }
+                            let secondsDiff = (parseInt(results_cooldown[0].pokemon_cooldown)+43200)-(parseInt(new Date().getTime() / 1000));
+                            if (secondsDiff > 0) {
+                                let [hours, minutes, seconds] = [0, 0, 0]; // 1=3600, 1=60, 1=1
+                                while (secondsDiff >= 3600) { hours += 1; secondsDiff -= 3600; }
+                                while (secondsDiff >= 60) { minutes += 1; secondsDiff -= 60; }
+                                while (secondsDiff >= 1) { seconds += 1; secondsDiff -= 1; }
+
                                 let sentence = "";
-                                if (hours > 0) {
-                                    sentence += hours+' hours';
-                                }
-                                if (minutes > 0 && hours != 0) {
-                                    sentence += ', '+minutes+' minutes';
-                                } else if (minutes > 0) {
-                                    sentence += minutes+' minutes';
-                                }
-                                if (seconds > 0 && hours != 0 || seconds > 0 && minutes != 0) {
-                                    sentence += ' and '+seconds+' seconds';
-                                } else if (seconds > 0) {
-                                    sentence += seconds+' seconds';
-                                }
+                                if (hours > 0) { sentence += hours+' hours';  }
+                                if (minutes > 0 && hours != 0) { sentence += ', '+minutes+' minutes'; } else if (minutes > 0) { sentence += minutes+' minutes'; }
+                                if (seconds > 0 && hours != 0 || seconds > 0 && minutes != 0) { sentence += ' and '+seconds+' seconds'; } else if (seconds > 0) { sentence += seconds+' seconds'; }
+                               
                                 message.reply(`You need to wait ${sentence} before playing again.`);
                                 // Deleting the message
                                 message.delete();
                             } else {
-                                let allUsers = [];
-                                for (let i=0; i < results_users.length; i++) {
-                                    allUsers.push(results_users[i]);
+                                let allUsersWithRarity = [];
+                                function getUsersWithRarity(rarity) {
+                                    allUsersWithRarity = [];
+                                    for (let i=0; i < results_users.length; i++) {
+                                        if (results_users[i].rarity == rarity) {
+                                            allUsersWithRarity.push(results_users[i]);
+                                        }
+                                    }
+                                    
+                                    // Preventing the case if there is no users with the rarity
+                                    if (allUsersWithRarity.length == 0) {
+                                        // We take one on the lower rarity
+                                        if (rarities.indexOf(rarity) > 0) {
+                                            rarity = rarities[rarities.indexOf(rarity)-1];
+                                            getUsersWithRarity(rarity);
+                                        }
+                                    }
                                 }
+                                getUsersWithRarity(rarity);
+
                                 // Selecting a random user from the user list
-                                let randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
+                                let randomUser = allUsersWithRarity[Math.floor(Math.random() * allUsersWithRarity.length)];
                 
                                 let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
                                 let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
@@ -354,7 +363,7 @@ promise1.then((value) => {
             // Checking member roles
             if (admin == true) {
                 embed.addFields(
-                    { name: 'Admin commands', value: '```!actus : display the last actuality.\n!add USER_ID : add a user to the pokemon card game.\n!cdreset : reset pokemon pkca cooldown for all users.\n!prefix NEW_PREFIX : change bot prefix.```' },
+                    { name: 'Admin commands', value: '```!actus : display the last actuality.\n!add USER_ID RARITY : add a user to the pokemon card game.\n!cdreset : reset pokemon pkca cooldown for all users.\n!prefix NEW_PREFIX : change bot prefix.```' },
                 );
             }
             if (modo == true) {
