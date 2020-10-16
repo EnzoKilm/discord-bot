@@ -112,6 +112,10 @@ promise1.then((value) => {
             let randomNumber = Math.random();
             let rarities = ["common", "rare", "epic", "legendary"];
             let rarityColors = ["#6792f0", "#27db21", "#b509b2", "#fce82d"];
+            let rarityEmojis = [];
+            for (let i=0; i < rarities.length; i++) {
+                rarityEmojis.push(message.guild.emojis.cache.find(emoji => emoji.name === rarities[i]));
+            }
             let rarity = rarities[0];
             // Common card : 70%; Rare card : 20%; Epic card : 8%; Legendary : 2%;
             if (randomNumber >= 0.7 && randomNumber < 0.9) {
@@ -177,7 +181,8 @@ promise1.then((value) => {
                                     .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
-                                        { name: `You get`, value: `${emoji} **__${randomUser.name}__**` }
+                                        { name: `You get`, value: `${emoji} **__${randomUser.name}__**` },
+                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)]} ${rarity}` }
                                     )
                                     .setTimestamp()
                                     .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
