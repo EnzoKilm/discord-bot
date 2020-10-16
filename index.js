@@ -182,7 +182,7 @@ promise1.then((value) => {
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
                                         { name: `You get`, value: `${emoji} **__${randomUser.name}__**` },
-                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)]} ${rarity}` }
+                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)]} ${rarity}` },
                                     )
                                     .setTimestamp()
                                     .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
@@ -446,7 +446,6 @@ promise1.then((value) => {
                 .setColor('#273261')
                 .setTitle(`Rareté des cartes demandée par ${author.username}`)
                 .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                .addField()
                 .addFields(
                     { name: `Common ${emojis[0]}`, value: '70%' },
                     { name: `Rare ${emojis[1]}`, value: '20%' },
