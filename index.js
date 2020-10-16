@@ -14,14 +14,6 @@ connection.connect();
 
 const client = new Discord.Client();
 
-// async function prefixQuery() {
-//     connection.query(`SELECT * FROM config WHERE id=1`, function (error, results, fields) { return results });
-// }
-
-
-// var newprefix = await prefixQuery();
-// console.log(result);
-
 var newprefix = "!";
 
 // connection.query(`SELECT * FROM config WHERE id=1`, function(err, rows){
@@ -224,7 +216,24 @@ client.on("message", function(message) {
     
     // Command : inv
     if (command === "inv") {
-        connection.query(`SELECT id FROM users WHERE name = "${author.username}"`, function (error, results, fields) {
+        let userObject = author;
+        let requestedBy = "";
+        if (args.length == 1) {
+            // The id is the first and only match found by the RegEx.
+            let matches = args[0].match(/^<@!?(\d+)>$/);
+            // If supplied variable was not a mention, matches will be null instead of an array.
+            if (!matches) return;
+            // However the first element in the matches array will be the entire mention, not just the ID,
+            // so use index 1.
+            let userID = matches[1];
+
+            // Getting the user with its id
+            let user = message.guild.members.resolve(userID).user;
+            userObject = user;
+            requestedBy = ` demandé par ${author.username}`;
+        }
+        
+        connection.query(`SELECT id FROM users WHERE name = "${userObject.username}"`, function (error, results, fields) {
             if (error) {
                 throw error;
             } else if (results) {
@@ -266,7 +275,7 @@ client.on("message", function(message) {
                                                     }
                                                     let embed = new Discord.MessageEmbed()
                                                         .setColor('#0870F0')
-                                                        .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                        .setAuthor(`Inventaire de ${userObject.username}${requestedBy}`, `${userObject.avatarURL()}`, `${userObject.avatarURL()}`)
                                                         .addField(`Tu as obtenu ${results_pk.length} des ${results_all_users.length} cartes à collectionner.`, `${progressBar} ${progressPercent}%`)
                                                     for (let j=0; j < embedText.length; j++) {
                                                         embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
@@ -353,7 +362,7 @@ client.on("message", function(message) {
             );
         }
         embed.addFields(
-            { name: 'User commands', value: '```!pkca : get a random pokemon user card.\n!inv : see your pokemon\'s card collection.```' },
+            { name: 'User commands', value: '```!pkca : get a random pokemon user card.\n!inv @USER: see user\'s pokemon card collection.```' },
         );
 
         embed.setTimestamp();
