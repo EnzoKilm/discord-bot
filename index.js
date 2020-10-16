@@ -16,7 +16,7 @@ const client = new Discord.Client();
 
 let prefix = "!";
 
-const promise1 = new Promise((resolve, reject) => {
+let promise1 = new Promise((resolve, reject) => {
     setTimeout(() => {
         connection.query(`SELECT * FROM config WHERE id=1`, function(err, rows){
             if(err) {
