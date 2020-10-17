@@ -177,12 +177,12 @@ promise1.then((value) => {
                                 let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
                                 let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
                                 let embed = new Discord.MessageEmbed()
-                                    .setColor(`${rarityColors[rarities.indexOf(rarity)]}`)
+                                    .setColor(`${rarityColors[rarities.indexOf(rarity)-1]}`)
                                     .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
                                         { name: `You get`, value: `${emoji} **__${randomUser.name}__**` },
-                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)]} ${rarity}` },
+                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)-1]} ${rarity}` },
                                     )
                                     .setTimestamp()
                                     .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
@@ -447,10 +447,10 @@ promise1.then((value) => {
                 .setTitle(`Rareté des cartes demandée par ${author.username}`)
                 .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                 .addFields(
-                    { name: `Common ${emojis[0]}`, value: '70%' },
-                    { name: `Rare ${emojis[1]}`, value: '20%' },
-                    { name: `Epic ${emojis[2]}`, value: '8%'},
-                    { name: `Legendary ${emojis[3]}`, value: '2%'},
+                    { name: `${emojis[0]} Common`, value: '70%' },
+                    { name: `${emojis[1]} Rare`, value: '20%' },
+                    { name: `${emojis[2]} Epic`, value: '8%'},
+                    { name: `${emojis[3]} Legendary`, value: '2%'},
                 )
                 .setTimestamp()
                 .setFooter(`Bonne collection !`, `${bot.avatarURL()}`);
