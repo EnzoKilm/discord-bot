@@ -177,7 +177,7 @@ promise1.then((value) => {
                                 let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
                                 let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
                                 let embed = new Discord.MessageEmbed()
-                                    .setColor(`${rarityColors[rarities.indexOf(rarity)-1]}`)
+                                    .setColor(`${rarityColors[rarities.indexOf(rarity)]}`)
                                     .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
@@ -230,7 +230,7 @@ promise1.then((value) => {
             });
         }
         
-        // Command : inv
+        // Command : inv @USER
         if (command === "inv") {
             let userObject = author;
             let requestedBy = "";
@@ -378,7 +378,7 @@ promise1.then((value) => {
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user\'s pokemon card collection.\n${prefix}rarity : see cards rarity percentages\`\`\`` },
+                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}rarity : see cards rarity percentages\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\`\`\`` },
             );
     
             embed.setTimestamp();
@@ -459,6 +459,80 @@ promise1.then((value) => {
             message.channel.send(embed);
             // Deleting the message
             message.delete();
+        }
+
+        // Command : money @USER
+        if (command === "money") {
+            let userObject = author;
+            let requestedBy = "";
+            if (args.length == 1) {
+                // The id is the first and only match found by the RegEx.
+                let matches = args[0].match(/^<@!?(\d+)>$/);
+                // If supplied variable was not a mention, matches will be null instead of an array.
+                if (!matches) return;
+                // However the first element in the matches array will be the entire mention, not just the ID,
+                // so use index 1.
+                let userID = matches[1];
+    
+                // Getting the user with its id
+                let user = message.guild.members.resolve(userID).user;
+                userObject = user;
+                requestedBy = ` demandé par ${author.username}`;
+            }
+
+            connection.query(`SELECT * FROM users WHERE name = "${userObject.username}"`, function (error, results, fields) {
+                if (error) {
+                    throw error;
+                } else if (results) {
+                    let user = results[0];
+                    
+                    let embed = new Discord.MessageEmbed()
+                        .setColor('#273261')
+                        .setTitle(`Argent de ${user.name}${requestedBy}`)
+                        .setAuthor(`${user.name}`, `${user.avatar_url}`, `${user.avatar_url}`)
+                        .addFields(
+                            { name: `Argent :`, value: `${user.money}€` },
+                        )
+                        .setTimestamp()
+                        .setFooter(`Commande : ${prefix}money`, `${bot.avatarURL()}`);
+
+                    // Sending the embed to the channel where the message was posted
+                    message.channel.send(embed);
+                    // Deleting the message
+                    message.delete();
+                }
+            });
+        }
+
+        // Command : moneytop
+        if (command === "moneytop") {
+            connection.query(`SELECT * FROM users ORDER BY money DESC LIMIT 3`, function (error, results, fields) {
+                if (error) {
+                    throw error;
+                } else if (results) {
+                    // Creating the embed
+                    let embed = new Discord.MessageEmbed()
+                        .setColor('#273261')
+                        .setTitle(`Top 3 des plus riches`)
+                        .setAuthor('Campus Academy', 'https://i.imgur.com/JvgbYON.png', 'https://github.com/EnzoKilm/discord-bot')
+                        
+                    for (let i=0; i < results.length; i++) {
+                        let user = results[i];
+                        
+                        embed.addFields(
+                            { name: `${user.name} :`, value: `${user.money}€` },
+                        );
+                    }
+                        
+                    embed.setTimestamp();
+                    embed.setFooter(`Commande : ${prefix}money`, `${bot.avatarURL()}`);
+
+                    // Sending the embed to the channel where the message was posted
+                    message.channel.send(embed);
+                    // Deleting the message
+                    message.delete();
+                }
+            });
         }
     });
     
