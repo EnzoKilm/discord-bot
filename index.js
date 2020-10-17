@@ -369,16 +369,16 @@ promise1.then((value) => {
             // Checking member roles
             if (admin == true) {
                 embed.addFields(
-                    { name: 'Admin commands', value: '```!actus : display the last actuality.\n!add USER_ID RARITY : add a user to the pokemon card game.\n!cdreset : reset pokemon pkca cooldown for all users.\n!prefix NEW_PREFIX : change bot prefix.\n!newcard USER_ID : display new card message.```' },
+                    { name: 'Admin commands', value: `\`\`\`${prefix}actus : display the last actuality.\n${prefix}add USER_ID RARITY : add a user to the pokemon card game.\n${prefix}cdreset : reset pokemon pkca cooldown for all users.\n${prefix}prefix NEW_PREFIX : change bot prefix.\n${prefix}newcard USER_ID : display new card message.\`\`\`` },
                 );
             }
             if (modo == true) {
                 embed.addFields(
-                    { name: 'Moderator commands', value: '```!test : test command.\n!ping : get the latency of the bot.```' },
+                    { name: 'Moderator commands', value: `\`\`\`${prefix}test : test command.\n${prefix}ping : get the latency of the bot.\`\`\`` },
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: '```!pkca : get a random pokemon user card.\n!inv @USER: see user\'s pokemon card collection.\n!rarity : see cards rarity percentages```' },
+                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user\'s pokemon card collection.\n${prefix}rarity : see cards rarity percentages\`\`\`` },
             );
     
             embed.setTimestamp();
