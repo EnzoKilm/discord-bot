@@ -182,7 +182,7 @@ promise1.then((value) => {
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
                                         { name: `You get`, value: `${emoji} **__${randomUser.name}__**` },
-                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)-1]} ${rarity}` },
+                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)]} ${rarity}` },
                                     )
                                     .setTimestamp()
                                     .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
@@ -314,10 +314,14 @@ promise1.then((value) => {
                                     if (error) {
                                         throw error;
                                     } else if (results_all_users) {
+                                        let messageStart = 'Tu n\'as';
+                                        if (userObject.username != author.username) {
+                                            messageStart = `${userObject.username} n'a`;
+                                        }
                                         let embed = new Discord.MessageEmbed()
                                             .setColor('#0870F0')
-                                            .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                                            .addField(`Tu n'as obtenu aucune carte sur les ${results_all_users.length} à collectionner.`, `Essaye d'écrire la commande ${prefix}pkca`)
+                                            .setAuthor(`${userObject.username}`, `${userObject.avatarURL()}`, `${userObject.avatarURL()}`)
+                                            .addField(`${messageStart} obtenu aucune carte sur les ${results_all_users.length} à collectionner.`, `Essaye d'écrire la commande ${prefix}pkca`)
                                             .setTimestamp()
                                             .setFooter(`Commande : ${prefix}inv`, `${bot.avatarURL()}`);
     
@@ -524,8 +528,8 @@ promise1.then((value) => {
                         );
                     }
                         
-                    embed.setTimestamp();
-                    embed.setFooter(`Commande : ${prefix}money`, `${bot.avatarURL()}`);
+                    embed.setTimestamp()
+                        .setFooter(`Commande : ${prefix}moneytop`, `${bot.avatarURL()}`);
 
                     // Sending the embed to the channel where the message was posted
                     message.channel.send(embed);
@@ -533,6 +537,100 @@ promise1.then((value) => {
                     message.delete();
                 }
             });
+        }
+
+        // Command : sell CARD_NAME
+        if (command === "sell") {
+            // Getting user's cards
+            connection.query(`SELECT id FROM users WHERE name = "${author.username}"`, function (error, results, fields) {
+                if (error) {
+                    throw error;
+                } else if (results) {
+                    let userID = results[0].id;
+                    connection.query(`SELECT * FROM pokemon WHERE user_id = '${userID}'`, function (error, results_pk, fields) {
+                        if (error) {
+                            throw error;
+                        } else if (results_pk) {
+                            let embedName = [];
+                            let embedText = [];
+                            let totalCountOfCards = 0;
+                            let cardsEmojis = [];
+    
+                            if (results_pk.length > 0) {
+                                async.forEachOf(results_pk, function(dataElement, i, inner_callback) {
+                                    connection.query(`SELECT name FROM users WHERE id = '${results_pk[i].pokemon_id}'`, function (error, results_pokemon_id, fields) {
+                                        if (error) {
+                                            throw error;
+                                        } else if (results_pokemon_id) {
+                                            let pokemonName = results_pokemon_id[0].name;
+                                            let pokemonNameChanged = pokemonName.replace("'", '').replace(/\s/g, '');
+                                            let count = results_pk[i].count;
+                                            if (count > 1) {
+                                                totalCountOfCards += count-1;
+                                                let emoji = message.guild.emojis.cache.find(emoji => emoji.name === pokemonNameChanged);
+                                                embedName.push([`**${pokemonName}**`]);
+                                                embedText.push([`${emoji} *x${count-1}*`]);
+                                                cardsEmojis.push(emoji);
+                                            }
+        
+                                            if (i+1 == results_pk.length) {
+                                                let moreThanOneCard = "";
+                                                if (totalCountOfCards > 1) { moreThanOneCard = "s"; }
+                                                
+                                                connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+                                                    if (error) {
+                                                        throw error;
+                                                    } else if (results_all_users) {
+                                                        let embed = new Discord.MessageEmbed()
+                                                            .setColor('#0870F0')
+                                                            .setAuthor(`Inventaire de ${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                            .addField(`Tu peux vendre ${totalCountOfCards} carte${moreThanOneCard}.`, `Tu ne peux vendre que les cartes que tu as en double.`)
+                                                        for (let j=0; j < embedText.length; j++) {
+                                                            embed.addField(`${embedName[j]}`, `${embedText[j]}`, true);
+                                                        }
+                                                        embed.addField(`Comment vendre une carte ?`, `Clique sur la réaction correspondant à la carte que tu veux vendre pour vendre celle-ci.`)
+                                                            .setTimestamp()
+                                                            .setFooter(`Commande : ${prefix}sell`, `${bot.avatarURL()}`);
+                                
+                                                        // Sending the embed and then reacting to it with all cards emojis
+                                                        message.channel.send({embed: embed}).then(embedMessage => {
+                                                            for (let j=0; j < cardsEmojis.length; j++) {
+                                                                embedMessage.react(`${cardsEmojis[j].id}`);
+                                                            }
+                                                        });
+
+                                                        // Deleting the message
+                                                        message.delete();
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                });
+                            } else {
+                                connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+                                    if (error) {
+                                        throw error;
+                                    } else if (results_all_users) {
+                                        let embed = new Discord.MessageEmbed()
+                                            .setColor('#0870F0')
+                                            .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                            .addField(`Tu n'as aucune carte à vendre.`, `Essaye d'écrire la commande ${prefix}pkca pour en obtenir`)
+                                            .setTimestamp()
+                                            .setFooter(`Commande : ${prefix}sell`, `${bot.avatarURL()}`);
+    
+                                        // Sending the embed to the channel where the message was posted
+                                        message.channel.send(embed);
+                                        // Deleting the message
+                                        message.delete();
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        
         }
     });
     
