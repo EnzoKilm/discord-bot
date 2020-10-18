@@ -373,7 +373,7 @@ promise1.then((value) => {
             // Checking member roles
             if (admin == true) {
                 embed.addFields(
-                    { name: 'Admin commands', value: `\`\`\`${prefix}actus : display the last actuality.\n${prefix}add USER_ID RARITY : add a user to the pokemon card game.\n${prefix}cdreset : reset pokemon pkca cooldown for all users.\n${prefix}prefix NEW_PREFIX : change bot prefix.\n${prefix}newcard USER_ID : display new card message.\`\`\`` },
+                    { name: 'Admin commands', value: `\`\`\`${prefix}actus : display the last actuality.\n${prefix}add USER_ID RARITY : add a user to the pokemon card game.\n${prefix}cdreset : reset pokemon pkca cooldown for all users.\n${prefix}prefix NEW_PREFIX : change bot prefix.\n${prefix}newcard USER_ID : display new card message.\n${prefix}shoprenew NUMBER_OF_CARDS : change cards which are avaliable in the shop.\`\`\`` },
                 );
             }
             if (modo == true) {
@@ -382,7 +382,7 @@ promise1.then((value) => {
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\`\`\`` },
+                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\n${prefix}shop : open the shop to buy new cards.\`\`\`` },
             );
     
             embed.setTimestamp();
@@ -748,6 +748,58 @@ promise1.then((value) => {
 
         // Command : shop
         if (command === "shop" && admin === true) {
+            // Creating the embed
+            let embed = new Discord.MessageEmbed()
+                .setColor('#F03A17')
+                .setTitle(`Bienvenue sur la boutique de cartes`)
+                .setAuthor('Boutique', 'https://i.imgur.com/GZTjvQO.png', 'https://github.com/EnzoKilm/discord-bot')
+            
+            // Getting data from the user who wants to buy
+            connection.query(`SELECT * FROM users WHERE name = "${author.username}"`, function (error, result_user, fields) {
+                if (error) {
+                    throw error;
+                } else if (result_user) {
+                    let user = result_user[0];
+
+                    // Getting cards which are selled currently
+                    connection.query(`SELECT * FROM shop`, function (error, result_shop, fields) {
+                        if (error) {
+                            throw error;
+                        } else if (result_shop) {
+                            if (result_shop.length == 0) {
+                                embed.addField('Aucune carte n\'est disponible dans la boutique.', 'Patience, tu pourras bientôt dépenser tes sous.');
+                            } else {
+                                for (let i=0; i < result_shop.length; i++) {
+                                    let cardSelled = result_shop[i];
+    
+                                    embed.addFields(
+                                        { name: `${cardSelled[i].card_name} : ${cardSelled[i].card_rarity}`, value: `Prix: ${cardSelled[i].price}€` },
+                                    );
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+                
+            embed.setTimestamp()
+                .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
+
+            // Sending the embed to the channel where the message was posted
+            message.channel.send(embed);
+            // Deleting the message
+            message.delete();
+        }
+
+        // Command : shoprenew NUMBER_OF_CARDS
+        if (command === "shoprenew" && admin === true) {
+            if (args != "") {
+                console.log(typeof args);
+                console.log(args);
+            } else {
+                message.reply('The command must contain the argument "NUMBER_OF_CARDS".');
+            }
+            message.delete();
         }
     });
     
