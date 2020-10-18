@@ -597,6 +597,7 @@ promise1.then((value) => {
                                                             .setTimestamp()
                                                             .setFooter(`Commande : ${prefix}sell`, `${bot.avatarURL()}`);
                                 
+                                                        let sellEmbedDelete = true;
                                                         // Sending the embed and then reacting to it with all cards emojis
                                                         message.channel.send({embed: sellEmbed}).then(sellEmbedMessage => {
                                                             for (let j=0; j < cardsEmojis.length; j++) {
@@ -608,13 +609,12 @@ promise1.then((value) => {
                                                                 
                                                                 // Collecting the reaction
                                                                 let sellCollector = sellEmbedMessage.createReactionCollector(sellFilter, { time: 15000 });
-                                                                let sellEmbedDelete = true;
                                                                 
                                                                 sellCollector.on('collect', (reaction, user) => {
                                                                     sellEmbedDelete = false;
                                                                     sellEmbedMessage.delete();
                                                                     let cardIndex = cardsEmojis.indexOf(reaction.emoji.id);
-                                                                    connection.query(`SELECT * FROM users WHERE name = '${embedName[cardIndex]}'`, function (error, results_user, fields) {
+                                                                    connection.query(`SELECT * FROM users WHERE name = "${embedName[cardIndex]}"`, function (error, results_user, fields) {
                                                                         if (error) {
                                                                             throw error;
                                                                         } else if (results_user) {
@@ -650,7 +650,6 @@ promise1.then((value) => {
                                                                                     };
                                                                                     let sellConfirmCollector = sellConfirmEmbedMessage.createReactionCollector(sellConfirmFilter, { time: 15000 });
                                                                                     sellConfirmCollector.on('collect', (reaction, user) => {
-                                                                                        sellConfirmEmbedDelete = false;
                                                                                         if (reaction.emoji.name == '✅') {
                                                                                             let sellFinalEmbed = new Discord.MessageEmbed()
                                                                                                 .setColor('#FFD700')
@@ -668,14 +667,19 @@ promise1.then((value) => {
                                                                                             connection.query(`UPDATE pokemon SET count = ${newCount} WHERE id = ${pokemonIDs[cardIndex]}`, function (error, results, fields) { if (error) { throw error; } });
 
                                                                                             sellConfirmEmbedMessage.delete();
+                                                                                            sellConfirmEmbedDelete = false;
                                                                                             message.channel.send(sellFinalEmbed);
                                                                                         } else {
-                                                                                            sellConfirmEmbedMessage.delete();
+                                                                                            if (sellConfirmEmbedDelete == true) {
+                                                                                                sellConfirmEmbedMessage.delete();
+                                                                                                sellConfirmEmbedDelete = false;
+                                                                                            }
                                                                                         }
                                                                                     });
                                                                                     sellConfirmCollector.on('end', collected => {
                                                                                         if (sellConfirmEmbedDelete == true) {
                                                                                             sellConfirmEmbedMessage.delete();
+                                                                                            sellConfirmEmbedDelete = false;
                                                                                         }
                                                                                     });
                                                                                 }
@@ -685,6 +689,7 @@ promise1.then((value) => {
                                                                 });
                                                                 sellCollector.on('end', collected => {
                                                                     if (sellEmbedDelete == true) {
+                                                                        sellEmbedDelete = false;
                                                                         sellEmbedMessage.delete();
                                                                     }
                                                                 });
