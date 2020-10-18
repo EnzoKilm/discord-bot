@@ -519,7 +519,7 @@ promise1.then((value) => {
                     let embed = new Discord.MessageEmbed()
                         .setColor('#FFD700')
                         .setTitle(`Top 3 des plus riches`)
-                        .setAuthor('Campus Academy', 'https://i.imgur.com/JvgbYON.png', 'https://github.com/EnzoKilm/discord-bot')
+                        .setAuthor('Stonks Academy', 'https://i.imgur.com/JvgbYON.png', 'https://github.com/EnzoKilm/discord-bot')
                         .setThumbnail('https://cdn.frankerfacez.com/emoticon/506491/4');
                         
                     let medals = ["🥇", "🥈", "🥉"];
@@ -747,8 +747,7 @@ promise1.then((value) => {
         }
 
         // Command : shop
-        if (command === "shop") {
-            message.reply('this command will be avaliable soon.');
+        if (command === "shop" && admin === true) {
         }
     });
     
