@@ -731,6 +731,11 @@ promise1.then((value) => {
             });
         
         }
+
+        // Command : shop
+        if (command === "shop") {
+            message.reply('this command will be avaliable soon.');
+        }
     });
     
     client.login(config.BOT_TOKEN);
