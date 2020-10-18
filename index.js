@@ -777,25 +777,24 @@ promise1.then((value) => {
                                     );
                                 }
                             }
+                            embed.setTimestamp()
+                                .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
+                
+                            // Sending the embed to the channel where the message was posted
+                            message.channel.send(embed);
+                            // Deleting the message
+                            message.delete();
                         }
                     });
                 }
             });
-                
-            embed.setTimestamp()
-                .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
-
-            // Sending the embed to the channel where the message was posted
-            message.channel.send(embed);
-            // Deleting the message
-            message.delete();
         }
 
         // Command : shoprenew NUMBER_OF_CARDS
         if (command === "shoprenew" && admin === true) {
             if (args != "") {
-                console.log(typeof args);
-                console.log(args);
+                let numberOfCards = parseInt(args[0]);
+                message.reply('Work in progress.');
             } else {
                 message.reply('The command must contain the argument "NUMBER_OF_CARDS".');
             }
