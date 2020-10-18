@@ -492,7 +492,7 @@ promise1.then((value) => {
                     let user = results[0];
                     
                     let embed = new Discord.MessageEmbed()
-                        .setColor('#273261')
+                        .setColor('#FFD700')
                         .setTitle(`Argent de ${user.name}${requestedBy}`)
                         .setAuthor(`${user.name}`, `${user.avatar_url}`, `${user.avatar_url}`)
                         .addFields(
@@ -517,15 +517,17 @@ promise1.then((value) => {
                 } else if (results) {
                     // Creating the embed
                     let embed = new Discord.MessageEmbed()
-                        .setColor('#273261')
+                        .setColor('#FFD700')
                         .setTitle(`Top 3 des plus riches`)
                         .setAuthor('Campus Academy', 'https://i.imgur.com/JvgbYON.png', 'https://github.com/EnzoKilm/discord-bot')
+                        .setThumbnail('https://cdn.frankerfacez.com/emoticon/506491/4');
                         
+                    let medals = ["🥇", "🥈", "🥉"];
                     for (let i=0; i < results.length; i++) {
                         let user = results[i];
                         
                         embed.addFields(
-                            { name: `${user.name} :`, value: `${user.money}€` },
+                            { name: `${medals[i]} ${user.name}`, value: `${user.money}€` },
                         );
                     }
                         
