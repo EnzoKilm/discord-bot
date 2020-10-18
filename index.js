@@ -666,9 +666,11 @@ promise1.then((value) => {
                                                                                             connection.query(`UPDATE users SET money = ${newBalance} WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
                                                                                             connection.query(`UPDATE pokemon SET count = ${newCount} WHERE id = ${pokemonIDs[cardIndex]}`, function (error, results, fields) { if (error) { throw error; } });
 
-                                                                                            sellConfirmEmbedMessage.delete();
-                                                                                            sellConfirmEmbedDelete = false;
-                                                                                            message.channel.send(sellFinalEmbed);
+                                                                                            if (sellConfirmEmbedDelete == true) {
+                                                                                                sellConfirmEmbedMessage.delete();
+                                                                                                sellConfirmEmbedDelete = false;
+                                                                                                message.channel.send(sellFinalEmbed);
+                                                                                            }
                                                                                         } else {
                                                                                             if (sellConfirmEmbedDelete == true) {
                                                                                                 sellConfirmEmbedMessage.delete();
