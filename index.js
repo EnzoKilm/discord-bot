@@ -382,7 +382,7 @@ promise1.then((value) => {
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}rarity : see cards rarity percentages\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\`\`\`` },
+                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\`\`\`` },
             );
     
             embed.setTimestamp();
@@ -438,10 +438,11 @@ promise1.then((value) => {
             }
         }
 
-        // Command : rarity
-        if (command === "rarity") {
+        // Command : stats
+        if (command === "stats") {
             // Commune : 70%; Rare : 20%; Épique : 8%; Légendaire : 2%;
             let rarities = ["commune", "rare", "epique", "legendaire"];
+            let rarityPrices = [20, 100, 500, 2000];
             let emojis = [];
             for (let i=0; i < rarities.length; i++) {
                 emojis.push(message.guild.emojis.cache.find(emoji => emoji.name === rarities[i]));
@@ -451,10 +452,10 @@ promise1.then((value) => {
                 .setTitle(`Rareté des cartes demandée par ${author.username}`)
                 .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                 .addFields(
-                    { name: `${emojis[0]} Commune`, value: '70%' },
-                    { name: `${emojis[1]} Rare`, value: '20%' },
-                    { name: `${emojis[2]} Épique`, value: '8%'},
-                    { name: `${emojis[3]} Légendaire`, value: '2%'},
+                    { name: `${emojis[0]} Commune`, value: `70% - valeur : ${rarityPrices[0]}€` },
+                    { name: `${emojis[1]} Rare`, value: `20% - valeur : ${rarityPrices[1]}€` },
+                    { name: `${emojis[2]} Épique`, value: `8% - valeur : ${rarityPrices[2]}€` },
+                    { name: `${emojis[3]} Légendaire`, value: `2% - valeur : ${rarityPrices[3]}€` },
                 )
                 .setTimestamp()
                 .setFooter(`Bonne collection !`, `${bot.avatarURL()}`);
