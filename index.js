@@ -593,7 +593,7 @@ promise1.then((value) => {
                                                         for (let j=0; j < embedText.length; j++) {
                                                             sellEmbed.addField(`**${embedName[j]}**`, `${embedText[j]}`, true);
                                                         }
-                                                        sellEmbed.addField(`Comment vendre une carte ?`, `Clique sur la réaction correspondant à la carte que tu veux vendre pour vendre celle-ci.\n*(Tu as 10 secondes pour réagir à ce message.)*`)
+                                                        sellEmbed.addField(`Comment vendre une carte ?`, `Clique sur la réaction correspondant à la carte que tu veux vendre pour vendre celle-ci.\n*(Tu as 15 secondes pour réagir à ce message.)*`)
                                                             .setTimestamp()
                                                             .setFooter(`Commande : ${prefix}sell`, `${bot.avatarURL()}`);
                                 
@@ -607,7 +607,7 @@ promise1.then((value) => {
                                                                 };
                                                                 
                                                                 // Collecting the reaction
-                                                                let sellCollector = sellEmbedMessage.createReactionCollector(sellFilter, { time: 5000 });
+                                                                let sellCollector = sellEmbedMessage.createReactionCollector(sellFilter, { time: 15000 });
                                                                 let sellEmbedDelete = true;
                                                                 
                                                                 sellCollector.on('collect', (reaction, user) => {
@@ -635,7 +635,7 @@ promise1.then((value) => {
                                                                                 .setThumbnail(`${userCard.avatar_url}`)
                                                                                 .addFields(
                                                                                     { name: `Es-tu sûr de vouloir vendre`, value: `**__${userCard.name}__** ?` },
-                                                                                    { name: `Cette carte ${userCard.rarity} te rapportera :`, value: `${cardPrice}€` },
+                                                                                    { name: `Cette carte ${userCard.rarity} te rapportera :`, value: `${cardPrice}€\n*(Tu as 15 secondes pour réagir à ce message.)*` },
                                                                                 )
                                                                                 .setTimestamp()
                                                                                 .setFooter(`Commande : ${prefix}sell`, `${bot.avatarURL()}`);
@@ -648,7 +648,7 @@ promise1.then((value) => {
                                                                                     let sellConfirmFilter = (reaction, user) => {
                                                                                         return ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
                                                                                     };
-                                                                                    let sellConfirmCollector = sellConfirmEmbedMessage.createReactionCollector(sellConfirmFilter, { time: 5000 });
+                                                                                    let sellConfirmCollector = sellConfirmEmbedMessage.createReactionCollector(sellConfirmFilter, { time: 15000 });
                                                                                     sellConfirmCollector.on('collect', (reaction, user) => {
                                                                                         sellConfirmEmbedDelete = false;
                                                                                         if (reaction.emoji.name == '✅') {
