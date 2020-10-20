@@ -753,7 +753,7 @@ promise1.then((value) => {
             // Creating the embed
             let embed = new Discord.MessageEmbed()
                 .setColor('#F03A17')
-                .setTitle(`Bienvenue sur la boutique de cartes`)
+                .setTitle(`Bienvenue sur la boutique de cartes\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n`)
                 .setAuthor('Boutique', 'https://i.imgur.com/GZTjvQO.png', 'https://github.com/EnzoKilm/discord-bot')
             
             // Getting data from the user who wants to buy
@@ -773,10 +773,19 @@ promise1.then((value) => {
                             } else {
                                 for (let i=0; i < result_shop.length; i++) {
                                     let cardSelled = result_shop[i];
-    
-                                    embed.addFields(
-                                        { name: `${cardSelled[i].card_name} : ${cardSelled[i].card_rarity}`, value: `Prix: ${cardSelled[i].price}€` },
-                                    );
+                                    let cardNameChanged = cardSelled.card_name.replace("'", '').replace(/\s/g, '');
+                                    let cardEmoji = message.guild.emojis.cache.find(emoji => emoji.name === cardNameChanged);
+                                    let rarityEmoji = message.guild.emojis.cache.find(emoji => emoji.name === cardSelled.card_rarity);
+                                    
+                                    if (i+1 == result_shop.length) {
+                                        embed.addFields(
+                                            { name: `${cardEmoji} ${cardSelled.card_name} : ${rarityEmoji} ${cardSelled.card_rarity}`, value: `Prix: ${cardSelled.price}€\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬` },
+                                        );
+                                    } else {
+                                        embed.addFields(
+                                            { name: `${cardEmoji} ${cardSelled.card_name} : ${rarityEmoji} ${cardSelled.card_rarity}`, value: `Prix: ${cardSelled.price}€\n\u200B` },
+                                        );
+                                    }
                                 }
                             }
                             embed.setTimestamp()
@@ -796,7 +805,33 @@ promise1.then((value) => {
         if (command === "shoprenew" && admin === true) {
             if (args != "") {
                 let numberOfCards = parseInt(args[0]);
-                message.reply('Work in progress.');
+
+                connection.query(`TRUNCATE TABLE shop`, function (error, results, fields) { if (error) throw error });
+                
+                connection.query(`SELECT * FROM users ORDER BY RAND() LIMIT ${numberOfCards}`, function (error, result_cards, fields) {
+                    if (error) {
+                        throw error;
+                    } else if (result_cards) {
+
+                        for (let i=0; i < result_cards.length; i++) {
+                            let rarities = ["commune", "rare", "epique", "legendaire"];
+                            let cardPrices = [50, 250, 1250, 5000];
+                            let card_price = 999999;
+                            
+                            for (let j=0; j < rarities.length; j++) {
+                                if (result_cards[i].rarity == rarities[j]) {
+                                    card_price = cardPrices[rarities.indexOf(rarities[j])];
+                                }
+                            }
+
+                            // let card_quantity = (Math.floor(Math.random() * Math.floor(2)))+1;
+                            let card_quantity = 1;
+
+                            connection.query(`INSERT INTO shop (card_id, card_name, card_rarity, price, quantity) VALUES (${result_cards[i].id}, "${result_cards[i].name}", '${result_cards[i].rarity}', ${card_price}, ${card_quantity})`, function (error, results, fields) { if (error) throw error });
+                        }
+                    }
+                });
+                message.reply(`Successfuly refreshed the shop with ${args[0]} cards.`);
             } else {
                 message.reply('The command must contain the argument "NUMBER_OF_CARDS".');
             }
