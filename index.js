@@ -168,8 +168,10 @@ promise1.then((value) => {
                                             getUsersWithRarity(rarity);
                                         }
                                     }
+                                    
+                                    return rarity;
                                 }
-                                getUsersWithRarity(rarity);
+                                let finalRarity = getUsersWithRarity(rarity);
 
                                 // Selecting a random user from the user list
                                 let randomUser = allUsersWithRarity[Math.floor(Math.random() * allUsersWithRarity.length)];
@@ -177,12 +179,12 @@ promise1.then((value) => {
                                 let userNameChanged = randomUser.name.replace("'", '').replace(/\s/g, '');
                                 let emoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
                                 let embed = new Discord.MessageEmbed()
-                                    .setColor(`${rarityColors[rarities.indexOf(rarity)]}`)
+                                    .setColor(`${rarityColors[rarities.indexOf(finalRarity)]}`)
                                     .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
                                     .setThumbnail(`${randomUser.avatar_url}`)
                                     .addFields(
                                         { name: `You get`, value: `${emoji} **__${randomUser.name}__**` },
-                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(rarity)]} ${rarity}` },
+                                        { name: 'Rareté :', value: `${rarityEmojis[rarities.indexOf(finalRarity)]} ${finalRarity}` },
                                     )
                                     .setTimestamp()
                                     .setFooter(`Commande : ${prefix}pkca`, `${bot.avatarURL()}`);
