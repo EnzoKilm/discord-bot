@@ -5,6 +5,10 @@ Discord bot for Campus Academy.
 The whole project won't work without the "config.json" file which contains various secret variables.
 Same for the "database.js" file who is also needed to create the database.
 
+# Version 1.1.1
+Commands added for everyone :
+* !collection : see all collectible cards.
+
 # Version 1.1.0
 Commands added for everyone :
 * !shop : open the shop to buy new cards.

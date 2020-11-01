@@ -384,7 +384,7 @@ promise1.then((value) => {
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\n${prefix}shop : open the shop to buy new cards.\`\`\`` },
+                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\n${prefix}shop : open the shop to buy new cards.\n${prefix}collection : see all collectible cards.\`\`\`` },
             );
     
             embed.setTimestamp();
@@ -949,6 +949,44 @@ promise1.then((value) => {
                 message.reply('The command must contain the argument "NUMBER_OF_CARDS".');
             }
             message.delete();
+        }
+
+        // Command : collection
+        if (command === "collection") {
+            connection.query(`SELECT * FROM users`, function (error, results_cards, fields) {
+                if (error) {
+                    throw error;
+                } else if (results_cards) {
+                    let rarities = ["commune", "rare", "epique", "legendaire"];
+                    let rarityEmojis = [];
+                    for (let i=0; i < rarities.length; i++) {
+                        rarityEmojis.push(message.guild.emojis.cache.find(emoji => emoji.name === rarities[i]));
+                    }
+
+                    // Creating the embed
+                    let embed = new Discord.MessageEmbed()
+                        .setColor('#F03A17')
+                        .setTitle(`Voici toutes les cartes à collectionner\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n`)
+                        .setAuthor('Collection des cartes', 'https://i.imgur.com/Q3AOvth.png', 'https://github.com/EnzoKilm/discord-bot')
+                        .setTimestamp()
+                        .setFooter(`Commande : ${prefix}collection`, `${bot.avatarURL()}`);
+                        
+                    for (let i=0; i < results_cards.length; i++) {
+                        let user = results_cards[i];
+                        let userNameChanged = user.name.replace("'", '').replace(/\s/g, '');
+                        let userEmoji = message.guild.emojis.cache.find(emoji => emoji.name === userNameChanged);
+                        
+                        embed.addFields(
+                            { name: `${userEmoji} ${user.name}`, value: `${rarityEmojis[rarities.indexOf(user.rarity)]} ${user.rarity}`, inline: true },
+                        );
+                    }
+
+                    // Sending the embed to the channel where the message was posted
+                    message.channel.send(embed);
+                    // Deleting the message
+                    message.delete();
+                }
+            });
         }
     });
     
