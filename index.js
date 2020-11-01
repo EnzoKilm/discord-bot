@@ -749,7 +749,7 @@ promise1.then((value) => {
         }
 
         // Command : shop
-        if (command === "shop" && admin === true) {
+        if (command === "shop") {
             // Creating the embed
             let shopEmbed = new Discord.MessageEmbed()
                 .setColor('#F03A17')
@@ -797,110 +797,112 @@ promise1.then((value) => {
                                     }
                                 }
                                 let shopEmbedDelete = true;
+                                let shopConfirmEmbedDelete = true;
                                 
                                 message.channel.send({embed: shopEmbed}).then(shopEmbedMessage => {
                                     for (let j=0; j < cardsEmojis.length; j++) {
-                                        shopEmbedMessage.react(`${cardsEmojis[j]}`);
-                                    
-                                        let shopFilter = (reaction, user) => {
-                                            return reaction.emoji.id === cardsEmojis[j] && user.id === message.author.id;
-                                        };
+                                        if (shopConfirmEmbedDelete == true) {
+                                            shopEmbedMessage.react(`${cardsEmojis[j]}`);
                                         
-                                        // Collecting the reaction
-                                        let shopCollector = shopEmbedMessage.createReactionCollector(shopFilter, { time: 15000 });
-                                        
-                                        shopCollector.on('collect', (reaction, user) => {
-                                            shopEmbedDelete = false;
-                                            shopEmbedMessage.delete();
-                                            let cardIndex = cardsEmojis.indexOf(reaction.emoji.id);
-                                            let card = cards[cardIndex];
-                                            let rarities = ["commune", "rare", "epique", "legendaire"];
-                                            let rarityColors = ["#6792f0", "#27db21", "#b509b2", "#fce82d"];
-                                            let shopConfirmEmbedDelete = true;
-
-                                            let shopConfirmEmbed = new Discord.MessageEmbed()
-                                                .setColor(`${rarityColors[rarities.indexOf(card.card_rarity)]}`)
-                                                .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                                                .setThumbnail(`${card.card_avatar}`)
-                                                .addFields(
-                                                    { name: `Es-tu sûr de vouloir acheter`, value: `**__${card.card_name}__** ?` },
-                                                    { name: `Cette carte ${card.card_rarity} coûte :`, value: `${card.price}€\n*(Tu as 15 secondes pour réagir à ce message.)*` },
-                                                )
-                                                .setTimestamp()
-                                                .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
-
-                                            message.channel.send({embed: shopConfirmEmbed}).then(shopConfirmEmbedMessage => {
-                                                for (let j=0; j < cardsEmojis.length; j++) {
-                                                    shopConfirmEmbedMessage.react('✅');
-                                                    shopConfirmEmbedMessage.react('❌');
-
-                                                    let shopConfirmFilter = (reaction, user) => {
-                                                        return ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
-                                                    };
-                                                    let shopConfirmCollector = shopConfirmEmbedMessage.createReactionCollector(shopConfirmFilter, { time: 15000 });
-                                                    shopConfirmCollector.on('collect', (reaction, user) => {
-                                                        if (reaction.emoji.name == '✅') {
-                                                            let shopFinalEmbed = new Discord.MessageEmbed()
-                                                                .setColor(`${rarityColors[rarities.indexOf(card.card_rarity)]}`)
-                                                                .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
-                                                                .setThumbnail(`${card.card_avatar}`)
-                                                                .setTimestamp()
-                                                                .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
-
-                                                            let newBalance = userData.money-card.price;
-                                                            let priceDiff = card.price-userData.money;
-                                                            if (newBalance < 0) {
-                                                                shopFinalEmbed.addFields(
-                                                                    { name: `Vous n'avez pas assez d'argent pour acheter cette ${card.card_name}.`, value: `Il vous manque ${priceDiff}€` },
-                                                                )
-                                                            } else {
-                                                                shopFinalEmbed.addFields(
-                                                                    { name: `Vous venez d'acheter ${card.card_name} !`, value: `Vous avez dépensé ${card.price}€` },
-                                                                )
-                                                                connection.query(`UPDATE users SET money = ${newBalance} WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
-                                                                // We check if the user already have the card (to increase the count) or to add it to its collection
-                                                                connection.query(`SELECT * FROM pokemon WHERE user_id = ${userData.id} AND pokemon_id = ${card.card_id}`, function (error, result_has_card, fields) {
-                                                                    if (error) {
-                                                                        throw error;
-                                                                    } else if (result_has_card) {
-                                                                        if (result_has_card.length == 0) {
-                                                                            connection.query(`INSERT INTO pokemon (user_id, pokemon_id, count) VALUES (${userData.id}, ${card.card_id}, 1)`, function (error, results, fields) { if (error) { throw error; } });
-                                                                        } else {
-                                                                            let newCount = result_has_card[0].count+1;
-                                                                            connection.query(`UPDATE pokemon SET count = ${newCount} WHERE id = ${result_has_card[0].id}`, function (error, results, fields) { if (error) { throw error; } });
-                                                                        }
-                                                                    }
-                                                                });
-                                                            }
-
-                                                            if (shopConfirmEmbedDelete == true) {
-                                                                shopConfirmEmbedDelete = false;
-                                                                shopConfirmEmbedMessage.delete();
-                                                                message.channel.send(shopFinalEmbed);
-                                                            }
-                                                        } else {
-                                                            if (shopConfirmEmbedDelete == true) {
-                                                                shopConfirmEmbedDelete = false;
-                                                                // Problem with the delete under
-                                                                shopConfirmEmbedMessage.delete();
-                                                            }
-                                                        }
-                                                    });
-                                                    shopConfirmCollector.on('end', collected => {
-                                                        if (shopConfirmEmbedDelete == true) {
-                                                            shopConfirmEmbedDelete = false;
-                                                            shopConfirmEmbedMessage.delete();
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        });
-                                        shopCollector.on('end', collected => {
-                                            if (shopEmbedDelete == true) {
+                                            let shopFilter = (reaction, user) => {
+                                                return reaction.emoji.id === cardsEmojis[j] && user.id === message.author.id;
+                                            };
+                                            
+                                            // Collecting the reaction
+                                            let shopCollector = shopEmbedMessage.createReactionCollector(shopFilter, { time: 15000 });
+                                            
+                                            shopCollector.on('collect', (reaction, user) => {
                                                 shopEmbedDelete = false;
                                                 shopEmbedMessage.delete();
-                                            }
-                                        });
+                                                let cardIndex = cardsEmojis.indexOf(reaction.emoji.id);
+                                                let card = cards[cardIndex];
+                                                let rarities = ["commune", "rare", "epique", "legendaire"];
+                                                let rarityColors = ["#6792f0", "#27db21", "#b509b2", "#fce82d"];
+    
+                                                let shopConfirmEmbed = new Discord.MessageEmbed()
+                                                    .setColor(`${rarityColors[rarities.indexOf(card.card_rarity)]}`)
+                                                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                    .setThumbnail(`${card.card_avatar}`)
+                                                    .addFields(
+                                                        { name: `Es-tu sûr de vouloir acheter`, value: `**__${card.card_name}__** ?` },
+                                                        { name: `Cette carte ${card.card_rarity} coûte :`, value: `${card.price}€\n*(Tu as 15 secondes pour réagir à ce message.)*` },
+                                                    )
+                                                    .setTimestamp()
+                                                    .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
+    
+                                                message.channel.send({embed: shopConfirmEmbed}).then(shopConfirmEmbedMessage => {
+                                                    for (let j=0; j < cardsEmojis.length; j++) {
+                                                        shopConfirmEmbedMessage.react('✅');
+                                                        shopConfirmEmbedMessage.react('❌');
+    
+                                                        let shopConfirmFilter = (reaction, user) => {
+                                                            return ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+                                                        };
+                                                        let shopConfirmCollector = shopConfirmEmbedMessage.createReactionCollector(shopConfirmFilter, { time: 15000 });
+                                                        shopConfirmCollector.on('collect', (reaction, user) => {
+                                                            if (reaction.emoji.name == '✅') {
+                                                                let shopFinalEmbed = new Discord.MessageEmbed()
+                                                                    .setColor(`${rarityColors[rarities.indexOf(card.card_rarity)]}`)
+                                                                    .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                                    .setThumbnail(`${card.card_avatar}`)
+                                                                    .setTimestamp()
+                                                                    .setFooter(`Commande : ${prefix}shop`, `${bot.avatarURL()}`);
+    
+                                                                let newBalance = userData.money-card.price;
+                                                                let priceDiff = card.price-userData.money;
+                                                                if (newBalance < 0) {
+                                                                    shopFinalEmbed.addFields(
+                                                                        { name: `Vous n'avez pas assez d'argent pour acheter cette ${card.card_name}.`, value: `Il vous manque ${priceDiff}€` },
+                                                                    )
+                                                                } else {
+                                                                    shopFinalEmbed.addFields(
+                                                                        { name: `Vous venez d'acheter ${card.card_name} !`, value: `Vous avez dépensé ${card.price}€` },
+                                                                    )
+                                                                    connection.query(`UPDATE users SET money = ${newBalance} WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
+                                                                    // We check if the user already have the card (to increase the count) or to add it to its collection
+                                                                    connection.query(`SELECT * FROM pokemon WHERE user_id = ${userData.id} AND pokemon_id = ${card.card_id}`, function (error, result_has_card, fields) {
+                                                                        if (error) {
+                                                                            throw error;
+                                                                        } else if (result_has_card) {
+                                                                            if (result_has_card.length == 0) {
+                                                                                connection.query(`INSERT INTO pokemon (user_id, pokemon_id, count) VALUES (${userData.id}, ${card.card_id}, 1)`, function (error, results, fields) { if (error) { throw error; } });
+                                                                            } else {
+                                                                                let newCount = result_has_card[0].count+1;
+                                                                                connection.query(`UPDATE pokemon SET count = ${newCount} WHERE id = ${result_has_card[0].id}`, function (error, results, fields) { if (error) { throw error; } });
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }
+    
+                                                                if (shopConfirmEmbedDelete == true) {
+                                                                    shopConfirmEmbedDelete = false;
+                                                                    shopConfirmEmbedMessage.delete();
+                                                                    message.channel.send(shopFinalEmbed);
+                                                                }
+                                                            } else {
+                                                                if (shopConfirmEmbedDelete == true) {
+                                                                    shopConfirmEmbedDelete = false;
+                                                                    // Problem with the delete under
+                                                                    shopConfirmEmbedMessage.delete();
+                                                                }
+                                                            }
+                                                        });
+                                                        shopConfirmCollector.on('end', collected => {
+                                                            if (shopConfirmEmbedDelete == true) {
+                                                                shopConfirmEmbedDelete = false;
+                                                                shopConfirmEmbedMessage.delete();
+                                                            }
+                                                        });
+                                                    }
+                                                });
+                                            });
+                                            shopCollector.on('end', collected => {
+                                                if (shopEmbedDelete == true) {
+                                                    shopEmbedDelete = false;
+                                                    shopEmbedMessage.delete();
+                                                }
+                                            });
+                                        }
                                     }
                                 });
                             }
@@ -910,9 +912,6 @@ promise1.then((value) => {
                     });
                 }
             });
-        } else if (command === "shop") {
-            message.reply("Patience...");
-            message.delete();
         }
 
         // Command : shoprenew NUMBER_OF_CARDS
