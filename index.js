@@ -798,6 +798,7 @@ promise1.then((value) => {
                                 }
                                 let shopEmbedDelete = true;
                                 let shopConfirmEmbedDelete = true;
+                                let alreadyBought = false;
                                 
                                 message.channel.send({embed: shopEmbed}).then(shopEmbedMessage => {
                                     for (let j=0; j < cardsEmojis.length; j++) {
@@ -858,20 +859,23 @@ promise1.then((value) => {
                                                                     shopFinalEmbed.addFields(
                                                                         { name: `Vous venez d'acheter ${card.card_name} !`, value: `Vous avez dépensé ${card.price}€` },
                                                                     )
-                                                                    connection.query(`UPDATE users SET money = ${newBalance} WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
-                                                                    // We check if the user already have the card (to increase the count) or to add it to its collection
-                                                                    connection.query(`SELECT * FROM pokemon WHERE user_id = ${userData.id} AND pokemon_id = ${card.card_id}`, function (error, result_has_card, fields) {
-                                                                        if (error) {
-                                                                            throw error;
-                                                                        } else if (result_has_card) {
-                                                                            if (result_has_card.length == 0) {
-                                                                                connection.query(`INSERT INTO pokemon (user_id, pokemon_id, count) VALUES (${userData.id}, ${card.card_id}, 1)`, function (error, results, fields) { if (error) { throw error; } });
-                                                                            } else {
-                                                                                let newCount = result_has_card[0].count+1;
-                                                                                connection.query(`UPDATE pokemon SET count = ${newCount} WHERE id = ${result_has_card[0].id}`, function (error, results, fields) { if (error) { throw error; } });
+                                                                    if (alreadyBought == false) {
+                                                                        alreadyBought = true;
+                                                                        connection.query(`UPDATE users SET money = ${newBalance} WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
+                                                                        // We check if the user already have the card (to increase the count) or to add it to its collection
+                                                                        connection.query(`SELECT * FROM pokemon WHERE user_id = ${userData.id} AND pokemon_id = ${card.card_id}`, function (error, result_has_card, fields) {
+                                                                            if (error) {
+                                                                                throw error;
+                                                                            } else if (result_has_card) {
+                                                                                if (result_has_card.length == 0) {
+                                                                                    connection.query(`INSERT INTO pokemon (user_id, pokemon_id, count) VALUES (${userData.id}, ${card.card_id}, 1)`, function (error, results, fields) { if (error) { throw error; } });
+                                                                                } else {
+                                                                                    let newCount = result_has_card[0].count+1;
+                                                                                    connection.query(`UPDATE pokemon SET count = ${newCount} WHERE id = ${result_has_card[0].id}`, function (error, results, fields) { if (error) { throw error; } });
+                                                                                }
                                                                             }
-                                                                        }
-                                                                    });
+                                                                        });
+                                                                    }
                                                                 }
     
                                                                 if (shopConfirmEmbedDelete == true) {
