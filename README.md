@@ -5,6 +5,10 @@ Discord bot for Campus Academy.
 The whole project won't work without the "config.json" file which contains various secret variables.
 Same for the "database.js" file who is also needed to create the database.
 
+# Version 1.1.3
+Commands added for everyone :
+* !sellall : sell all your duplicates cards.
+
 # Version 1.1.2
 1. New cards added to the game
 2. Various bug fix
