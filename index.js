@@ -67,6 +67,11 @@ promise1.then((value) => {
                 modo = true;
             }
         }
+        // If the user is the admin 
+        if (adminID == message.author.id) {
+            admin = true;
+            modo = true;
+        }
     
         // Detecting differents commands
         if (command === "ping" && modo === true) {
@@ -98,9 +103,14 @@ promise1.then((value) => {
         // Command : add USER_ID RARITY
         if (command === "add" && admin === true) {
             if (args != "") {
-                let user = message.guild.members.resolve(args[0]).user;
-                connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown, rarity) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null, '${args[1]}')`, function (error, results, fields) { if (error) throw error });
-                message.reply(`User successfully added ${user.username} to the database.`);
+                let member = message.guild.members.resolve(args[0]);
+                if (member == null) {
+                    message.reply(`Something is wrong... check the console for further informations.`);
+                } else {
+                    let user = member.user;
+                    connection.query(`INSERT INTO users (discord_id, name, avatar_url, pokemon_cooldown, rarity) VALUES ('${args[0]}', "${user.username}", '${user.avatarURL()}', null, '${args[1]}')`, function (error, results, fields) { if (error) throw error });
+                    message.reply(`User successfully added ${user.username} to the database.`);
+                }
             } else {
                 message.reply('The command must contain the argument "USER_ID".');
             }
@@ -384,7 +394,7 @@ promise1.then((value) => {
                 );
             }
             embed.addFields(
-                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\n${prefix}shop : open the shop to buy new cards.\n${prefix}collection : see all collectible cards.\`\`\`` },
+                { name: 'User commands', value: `\`\`\`${prefix}pkca : get a random pokemon user card.\n${prefix}inv @USER: see user's pokemon card collection.\n${prefix}stats : see cards statistics\n${prefix}money @USER : see user's money\n${prefix}moneytop : see the richest members of the server\n${prefix}sell : sell your duplicates cards and get money in exchange.\n${prefix}sellall : sell all your duplicates cards.\n${prefix}shop : open the shop to buy new cards.\n${prefix}collection : see all collectible cards.\`\`\`` },
             );
     
             embed.setTimestamp();
@@ -741,6 +751,140 @@ promise1.then((value) => {
                                     }
                                 });
                             }
+                        }
+                    });
+                }
+            });
+        
+        }
+
+        // Command : sellall
+        if (command === "sellall") {
+            // Getting user's cards
+            connection.query(`SELECT * FROM users WHERE name = "${author.username}"`, function (error, results, fields) {
+                if (error) {
+                    throw error;
+                } else if (results) {
+                    let userID = results[0].id;
+                    connection.query(`SELECT * FROM pokemon WHERE user_id = '${userID}'`, function (error, results_pk, fields) {
+                        if (error) {
+                            throw error;
+                        } else if (results_pk) {
+                            let embedName = [];
+                            let embedText = [];
+                            let totalCountOfCards = 0;
+                            let cardsEmojis = [];
+                            let cardCount = [];
+                            let pokemonIDs = [];
+                            let rarities = ["commune", "rare", "epique", "legendaire"];
+                            let rarityPrices = [20, 100, 500, 2000];
+                            let totalSellPrice = 0;
+                            
+                            async.forEachOf(results_pk, function(dataElement, i, inner_callback) {
+                                connection.query(`SELECT name, rarity FROM users WHERE id = '${results_pk[i].pokemon_id}'`, function (error, results_pokemon_id, fields) {
+                                    if (error) {
+                                        throw error;
+                                    } else if (results_pokemon_id) {
+                                        let pokemonName = results_pokemon_id[0].name;
+                                        let pokemonNameChanged = pokemonName.replace("'", '').replace(/\s/g, '');
+                                        let count = results_pk[i].count;
+                                        if (count > 1) {
+                                            totalCountOfCards += count-1;
+                                            let emoji = message.guild.emojis.cache.find(emoji => emoji.name === pokemonNameChanged);
+                                            embedName.push([`${pokemonName}`]);
+                                            embedText.push([`${emoji} *x${count-1}*`]);
+                                            cardsEmojis.push(emoji.id);
+                                            cardCount.push(count);
+                                            pokemonIDs.push(results_pk[i].id);
+                                            totalSellPrice += (count-1) * rarityPrices[rarities.indexOf(results_pokemon_id[0].rarity)];
+                                        }
+    
+                                        if (i+1 == results_pk.length) {
+                                            let moreThanOneCard = "";
+                                            if (totalCountOfCards > 1) { moreThanOneCard = "s" }
+                                            if (totalCountOfCards >= 1) {
+                                                connection.query(`SELECT * FROM users`, function (error, results_all_users, fields) {
+                                                    if (error) {
+                                                        throw error;
+                                                    } else if (results_all_users) {
+                                                        let sellEmbed = new Discord.MessageEmbed()
+                                                            .setColor('#0870F0')
+                                                            .setAuthor(`Cartes à vendre de ${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                            .addField(`Tu peux vendre ${totalCountOfCards} carte${moreThanOneCard}.`, `Tu ne peux vendre que les cartes que tu as en double.`);
+
+                                                        for (let j=0; j < embedText.length; j++) {
+                                                            sellEmbed.addField(`**${embedName[j]}**`, `${embedText[j]}`, true);
+                                                        }
+                                                        sellEmbed.addField(`Vendre toutes ces cartes te rapportera ${totalSellPrice}€`, `*(Tu as 15 secondes pour réagir à ce message.)*`)
+                                                            .setTimestamp()
+                                                            .setFooter(`Commande : ${prefix}sellall`, `${bot.avatarURL()}`);
+                                
+                                                        let sellEmbedDelete = true;
+                                                        // Sending the embed and then reacting to it with all cards emojis
+                                                        message.channel.send({embed: sellEmbed}).then(sellEmbedMessage => {
+                                                            sellEmbedMessage.react('✅');
+                                                            sellEmbedMessage.react('❌');
+
+                                                            let sellConfirmFilter = (reaction, user) => {
+                                                                return ['✅', '❌'].includes(reaction.emoji.name) && user.id === message.author.id;
+                                                            };
+                                                            let sellConfirmCollector = sellEmbedMessage.createReactionCollector(sellConfirmFilter, { time: 15000 });
+                                                            sellConfirmCollector.on('collect', (reaction, user) => {
+                                                                if (reaction.emoji.name == '✅') {
+                                                                    let sellFinalEmbed = new Discord.MessageEmbed()
+                                                                        .setColor('#FFD700')
+                                                                        .setAuthor(`${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                                        .addFields(
+                                                                            { name: `Vous venez de vendre toutes vos cartes en double !`, value: `Vous avez gagné ${totalSellPrice}€` },
+                                                                        )
+                                                                        .setTimestamp()
+                                                                        .setFooter(`Commande : ${prefix}sellall`, `${bot.avatarURL()}`);
+
+                                                                    let newBalance = results[0].money+totalSellPrice;
+                                                                    for (let k=0; k < pokemonIDs.length; k++) {
+                                                                        connection.query(`UPDATE pokemon SET count = 0 WHERE id = ${pokemonIDs[k]}`, function (error, results, fields) { if (error) { throw error; } });
+                                                                    }
+                                                                    connection.query(`UPDATE users SET money = ${newBalance} WHERE name = "${author.username}"`, function (error, results, fields) { if (error) { throw error; } });
+
+                                                                    if (sellEmbedDelete == true) {
+                                                                        sellEmbedDelete = false;
+                                                                        sellEmbedMessage.delete();
+                                                                        message.channel.send(sellFinalEmbed);
+                                                                    }
+                                                                } else {
+                                                                    if (sellEmbedDelete == true) {
+                                                                        sellEmbedDelete = false;
+                                                                        sellEmbedMessage.delete();
+                                                                    }
+                                                                }
+                                                            });
+                                                            sellConfirmCollector.on('end', collected => {
+                                                                if (sellEmbedDelete == true) {
+                                                                    sellEmbedDelete = false;
+                                                                    sellEmbedMessage.delete();
+                                                                }
+                                                            });
+                                                        });
+                                                        // Deleting the message
+                                                        message.delete();
+                                                    }
+                                                });
+                                            } else {
+                                                let sellEmbed = new Discord.MessageEmbed()
+                                                    .setColor('#0870F0')
+                                                    .setAuthor(`Cartes à vendre de ${author.username}`, `${author.avatarURL()}`, `${author.avatarURL()}`)
+                                                    .addField(`Tu ne peux vendre aucune carte.`, `Tu ne peux uniquement vendre les cartes que tu as en double.`)
+                                                    .setTimestamp()
+                                                    .setFooter(`Commande : ${prefix}sellall`, `${bot.avatarURL()}`);
+
+                                                message.channel.send(sellEmbed);
+                                                message.delete();
+                                            }
+                                            
+                                        }
+                                    }
+                                });
+                            });
                         }
                     });
                 }
